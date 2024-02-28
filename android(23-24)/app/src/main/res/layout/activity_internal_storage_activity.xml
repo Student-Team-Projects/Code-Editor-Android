@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/text_enter_field_background"
+    >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="62dp"
+        android:orientation="horizontal"
+        android:background="@drawable/explorer_panel_background"
+        android:gravity="center"
+        >
+
+        <Button
+            android:id="@+id/backButton"
+            android:layout_width="65dp"
+            android:layout_height="50dp"
+
+            style="?android:attr/borderlessButtonStyle"
+
+            android:background="@drawable/button_selector"
+            android:fontFamily="@font/uncutsans_bold"
+            android:paddingHorizontal="0dp"
+            android:text="@string/back"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            android:layout_gravity="center_vertical"
+            />
+
+        <Button
+            android:id="@+id/createFolderButton"
+            android:layout_width="85dp"
+            android:layout_height="50dp"
+            style="?android:attr/borderlessButtonStyle"
+            android:text="@string/new_folder"
+            android:background="@drawable/button_selector"
+            android:fontFamily="@font/uncutsans_bold"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:paddingTop="0dp"
+            android:paddingBottom="0dp"
+            android:textAllCaps="false"
+            android:textSize="14sp"
+            android:layout_gravity="center_vertical"
+            />
+
+        <Button
+            android:id="@+id/createFileButton"
+            android:layout_width="85dp"
+            android:layout_height="50dp"
+            style="?android:attr/borderlessButtonStyle"
+            android:text="@string/new_file"
+            android:background="@drawable/button_selector"
+            android:fontFamily="@font/uncutsans_bold"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:paddingTop="0dp"
+            android:paddingBottom="0dp"
+            android:textAllCaps="false"
+            android:textSize="14sp"
+            android:layout_gravity="center_vertical"/>
+
+        <Button
+            android:id="@+id/createDeviceButton"
+            android:layout_width="85dp"
+            android:layout_height="50dp"
+            style="?android:attr/borderlessButtonStyle"
+            android:text="@string/device"
+            android:background="@drawable/button_selector"
+            android:fontFamily="@font/uncutsans_bold"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            android:layout_gravity="center_vertical"/>
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"/>
+
+        <Button
+            android:id="@+id/createExitButton"
+            android:layout_width="wrap_content"
+            android:layout_height="50dp"
+            style="?android:attr/borderlessButtonStyle"
+            android:text="@string/exit"
+            android:background="@drawable/button_selector"
+            android:fontFamily="@font/uncutsans_bold"
+            android:paddingHorizontal="0dp"
+            android:textAllCaps="false"
+            android:textSize="16sp"
+            android:layout_gravity="center_vertical"
+            />
+
+
+    </LinearLayout>
+
+
+    <!-- Ma in Content ScrollView -->
+    <LinearLayout
+        android:id="@+id/filesLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+    </LinearLayout>
+
+</LinearLayout>

@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">CodeEditor</string>
+    <string name="file">File</string>
+    <string name="git">Git</string>
+    <string name="file_explorer">File Explorer</string>
+    <string name="back">Back</string>
+    <string name="exit">Exit</string>
+    <string name="new_file">New\nFile</string>
+    <string name="new_folder">New\nFolder</string>
+    <string name="device">Device</string>
+    <string name="open_hint">
+        To start editing open or create
+            new file or project
+    </string>
+</resources>
