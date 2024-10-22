@@ -24,19 +24,6 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".NewFileActivity"
-            android:screenOrientation="landscape" />
-        <activity
-            android:name=".FilesController"
-            android:screenOrientation="landscape"
-        />        
-        <activity
-            android:name=".OpenFileActivity"
-            android:screenOrientation="landscape" />
-        <activity
-            android:name=".FileEditorActivity"
-            android:screenOrientation="landscape" />
-        <activity
             android:name=".FileExplorerActivity"
             android:screenOrientation="landscape" />
         <activity
