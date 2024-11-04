@@ -20,11 +20,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -34,6 +37,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.codeeditor.ui.theme.CodeEditorTheme
 import com.example.codeeditor.viewmodels.CodeVM
+import com.example.codeeditor.viewmodels.DirectoryEntry
+import com.example.codeeditor.viewmodels.DirectoryTreeVM
 import com.example.codeeditor.viewmodels.FileVM
 import java.io.BufferedReader
 import java.io.FileNotFoundException
@@ -47,12 +52,14 @@ private val ButtonRowPadding = 8.dp
 private val ButtonTextFieldSpacing = 0.dp
 private val BorderThickness = 1.dp
 private val CornerRadius = 8.dp
+private val DirectoryTreePaddingIncrement = 4
 private val searchingExtensions = arrayOf("text/plain", "text/x-c", "text/x-java-source", "text/x-python")
 private const val saveAsDefaultExtension = "text/plain"
 
 class MainActivity : ComponentActivity() {
     private val codeVM: CodeVM by viewModels()
     private val fileVM: FileVM by viewModels()
+    private val directoryVM: DirectoryTreeVM by viewModels()
 
     private val openDocumentLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocument()
@@ -60,6 +67,14 @@ class MainActivity : ComponentActivity() {
         uri?.let {
             updateCurrentFile(it)
             readTextFromUri(it)
+        }
+    }
+
+    private val openDirectoryLauncher = registerForActivityResult(
+        ActivityResultContracts.OpenDocumentTree()
+    ) { uri: Uri? ->
+        uri?.let {
+            updateCurrentDirectory(it)
         }
     }
 
@@ -80,8 +95,10 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    ScreenLayout(codeVM=codeVM, open={openDocumentPicker()},
-                        saveAs = {createFilePicker()}, save={saveCodeToFile()})
+                    MainScreen(codeVM=codeVM, openFile={openDocumentPicker()},
+                        saveAs = {createFilePicker()}, save={saveCodeToFile()},
+                        directoryVM=directoryVM, openDirectory = {openDirectoryPicker()}
+                    )
                 }
             }
         }
@@ -90,6 +107,9 @@ class MainActivity : ComponentActivity() {
     private fun openDocumentPicker() {
         openDocumentLauncher.launch(searchingExtensions)
     }
+    private fun openDirectoryPicker() {
+        openDirectoryLauncher.launch(Uri.EMPTY)
+    }
 
     private fun createFilePicker() {
         saveAs.launch("newFile.txt")
@@ -97,6 +117,10 @@ class MainActivity : ComponentActivity() {
 
     private fun updateCurrentFile(uri: Uri) {
         fileVM.fileUri.value = uri
+    }
+    private fun updateCurrentDirectory(uri: Uri) {
+        val subDir = DirectoryEntry(uri, emptyList())
+        directoryVM.currentEntry.value = DirectoryEntry(uri, listOf(subDir, subDir))
     }
 
     private fun readTextFromUri(uri: Uri) {
@@ -125,6 +149,46 @@ class MainActivity : ComponentActivity() {
         } catch (e: FileNotFoundException) {
             Toast.makeText(this, "File not found", Toast.LENGTH_SHORT).show()
             e.printStackTrace()
+        }
+    }
+}
+
+@Composable
+fun MainScreen(
+    codeVM: CodeVM,
+    openFile: () -> Unit,
+    save: () -> Unit,
+    saveAs: () -> Unit,
+    openDirectory: () -> Unit,
+    directoryVM: DirectoryTreeVM
+) {
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            DirectoryTreeMenu(open=openDirectory, directoryVM=directoryVM)
+        }
+    ) {
+        ScreenLayout(codeVM, openFile, save, saveAs)
+    }
+}
+
+@Composable
+fun DirectoryTreeMenu(open: () -> Unit, directoryVM: DirectoryTreeVM) {
+    val currentDirectory by directoryVM.currentEntry.collectAsState()
+    Button(onClick = open) {
+        Text(text = "Open directory")
+    }
+    DirectoryTree(currentDirectory)
+}
+@Composable
+fun DirectoryTree(entry: DirectoryEntry, padding: Int = 0) {
+    Column(modifier = Modifier.padding(start = padding.dp)) {
+        Text(text = entry.name.toString(), style = MaterialTheme.typography.bodyMedium)
+
+        entry.subEntries.forEach { subEntry ->
+            DirectoryTree(subEntry, padding+DirectoryTreePaddingIncrement)
         }
     }
 }
