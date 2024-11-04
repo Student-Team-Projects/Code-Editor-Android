@@ -173,6 +173,9 @@ fun CodeArea(modifier: Modifier, codeVM: CodeVM) {
             value = text,
             onValueChange = { newText -> codeVM.text.value = newText },
             modifier = Modifier.fillMaxSize(),
+            placeholder = {
+                Text(text = "// your code here", color= Color.Gray)
+            },
             colors = TextFieldDefaults.colors(
                 focusedTextColor = Color.Black,
                 unfocusedTextColor = Color.Black,

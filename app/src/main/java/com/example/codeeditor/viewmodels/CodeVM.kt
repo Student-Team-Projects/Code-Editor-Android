@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 class CodeVM : ViewModel() {
-    val text = MutableStateFlow("// your code here")
+    val text = MutableStateFlow("")
     init {
         observeTextChanges()
     }
