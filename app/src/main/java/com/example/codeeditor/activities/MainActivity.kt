@@ -10,6 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,7 +48,6 @@ import java.io.BufferedReader
 import java.io.FileNotFoundException
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
-import java.util.Optional
 
 private val BackgroundColor = Color.White
 private val CodeAreaBackgroundColor = Color(0xFFFFF9C4)
@@ -104,9 +104,10 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MainScreen(codeVM=codeVM, openFile={openDocumentPicker()},
-                        saveAs = {createFilePicker()}, save={saveCodeToFile()},
-                        directoryVM=directoryVM, openDirectory = {openDirectoryPicker()}
+                    MainScreen(codeVM=codeVM, openFile=::openDocumentPicker,
+                        saveAs=::createFilePicker, save=::saveCodeToFile,
+                        directoryVM=directoryVM, openDirectory=::openDirectoryPicker,
+                        onEntryClicked=::onEntryClicked
                     )
                 }
             }
@@ -125,23 +126,31 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun updateCurrentFile(uri: Uri) {
-        fileVM.fileUri.value = uri
+        fileVM.updateFileUri(uri)
     }
+
     private fun updateCurrentDirectory(uri: Uri) {
         directoryVM.currentEntry.value = directoryVM.directoryEntry(uri).getOrNull()
     }
 
-    private fun readTextFromUri(uri: Uri) {
+    fun readTextFromUri(uri: Uri) {
         try {
             contentResolver.openInputStream(uri)?.use { inputStream ->
                 val text = BufferedReader(InputStreamReader(inputStream)).readText()
-                codeVM.text.value = text
+                codeVM.updateText(text)
             } ?: run {
                 Toast.makeText(this, "Failed to open file", Toast.LENGTH_SHORT).show()
             }
         } catch (e: FileNotFoundException) {
             Toast.makeText(this, "File not found", Toast.LENGTH_SHORT).show()
             e.printStackTrace()
+        }
+    }
+
+    private fun onEntryClicked(directoryEntry: DirectoryEntry) {
+        if (directoryEntry.isFile()) {
+            updateCurrentFile(directoryEntry.uri())
+            readTextFromUri(directoryEntry.uri())
         }
     }
 
@@ -168,14 +177,15 @@ fun MainScreen(
     save: () -> Unit,
     saveAs: () -> Unit,
     openDirectory: () -> Unit,
-    directoryVM: DirectoryTreeVM
+    directoryVM: DirectoryTreeVM,
+    onEntryClicked: (DirectoryEntry) -> Unit
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
 
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            DirectoryTreeMenu(open=openDirectory, directoryVM=directoryVM)
+            DirectoryTreeMenu(openDirectory, directoryVM, onEntryClicked)
         }
     ) {
         ScreenLayout(codeVM, openFile, save, saveAs)
@@ -183,7 +193,7 @@ fun MainScreen(
 }
 
 @Composable
-fun DirectoryTreeMenu(open: () -> Unit, directoryVM: DirectoryTreeVM) {
+fun DirectoryTreeMenu(open: () -> Unit, directoryVM: DirectoryTreeVM, onEntryClicked:(DirectoryEntry) -> Unit) {
     val currentDirectory: DirectoryEntry? by directoryVM.currentEntry.collectAsState()
     Column(modifier = Modifier
                 .fillMaxHeight()
@@ -194,17 +204,21 @@ fun DirectoryTreeMenu(open: () -> Unit, directoryVM: DirectoryTreeVM) {
             Text(text = "Open directory")
         }
         currentDirectory?.let {
-            DirectoryTree(it)
+            DirectoryTree(it, onEntryClicked)
         }
     }
 }
+
 @Composable
-fun DirectoryTree(entry: DirectoryEntry, padding: Int = 0) {
+fun DirectoryTree(entry: DirectoryEntry, onEntryClicked:(DirectoryEntry) -> Unit, padding: Int = 0) {
     Column(modifier = Modifier.padding(start = padding.dp)) {
-        Text(text = entry.name(), style = MaterialTheme.typography.bodyMedium, color = Color.Black)
+        Text(text = entry.name(), style = MaterialTheme.typography.bodyMedium, color = Color.Black,
+            modifier = Modifier.clickable {
+                onEntryClicked.invoke(entry)
+            })
 
         entry.subEntries().forEach { subEntry ->
-            DirectoryTree(subEntry, padding+DirectoryTreePaddingIncrement)
+            DirectoryTree(subEntry, onEntryClicked, padding+DirectoryTreePaddingIncrement)
         }
     }
 }
@@ -240,8 +254,6 @@ fun ButtonRow(codeVM: CodeVM, open: ()->Unit, save:() -> Unit, saveAs: () -> Uni
 
 @Composable
 fun CodeArea(modifier: Modifier, codeVM: CodeVM) {
-    val text by codeVM.text.collectAsState()
-
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -250,8 +262,8 @@ fun CodeArea(modifier: Modifier, codeVM: CodeVM) {
             .background(CodeAreaBackgroundColor)
     ) {
         TextField(
-            value = text,
-            onValueChange = { newText -> codeVM.text.value = newText },
+            value = codeVM.text.value,
+            onValueChange = { newText: String -> codeVM.updateText(newText) },
             modifier = Modifier.fillMaxSize(),
             placeholder = {
                 Text(text = "// your code here", color= Color.Gray)

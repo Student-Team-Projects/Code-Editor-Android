@@ -5,13 +5,21 @@ import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 
-open class DirectoryEntry(private val df: DocumentFile) {
+class DirectoryEntry(private val df: DocumentFile) {
     fun name(): String {
         return df.name ?: "error_no_name"
     }
 
     fun subEntries(): List<DirectoryEntry> {
         return df.listFiles().mapNotNull { df -> DirectoryEntry((df)) }
+    }
+
+    fun isFile(): Boolean {
+        return df.isFile
+    }
+
+    fun uri(): Uri {
+        return df.uri
     }
 }
 
