@@ -1,20 +1,13 @@
 package com.example.codeeditor.viewmodels
 
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
 
 class CodeVM : ViewModel() {
-    val text = MutableStateFlow("")
-    init {
-        observeTextChanges()
-    }
-    private fun observeTextChanges() {
-        viewModelScope.launch {
-            text.collect { newText ->
-                println("Text changed to: $newText")
-            }
-        }
+    private val _text = mutableStateOf("")
+    val text: State<String> = _text
+    fun updateText(newText: String) {
+        _text.value = newText
     }
 }
