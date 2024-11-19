@@ -1,5 +1,6 @@
 package com.example.codeeditor.activities
 
+import DirectoryTreeVMFactory
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -35,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.documentfile.provider.DocumentFile
 import com.example.codeeditor.ui.theme.CodeEditorTheme
 import com.example.codeeditor.viewmodels.CodeVM
 import com.example.codeeditor.viewmodels.DirectoryEntry
@@ -44,6 +47,7 @@ import java.io.BufferedReader
 import java.io.FileNotFoundException
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
+import java.util.Optional
 
 private val BackgroundColor = Color.White
 private val CodeAreaBackgroundColor = Color(0xFFFFF9C4)
@@ -52,14 +56,19 @@ private val ButtonRowPadding = 8.dp
 private val ButtonTextFieldSpacing = 0.dp
 private val BorderThickness = 1.dp
 private val CornerRadius = 8.dp
-private val DirectoryTreePaddingIncrement = 4
+private const val DirectoryTreePaddingIncrement = 8
 private val searchingExtensions = arrayOf("text/plain", "text/x-c", "text/x-java-source", "text/x-python")
 private const val saveAsDefaultExtension = "text/plain"
 
 class MainActivity : ComponentActivity() {
     private val codeVM: CodeVM by viewModels()
     private val fileVM: FileVM by viewModels()
-    private val directoryVM: DirectoryTreeVM by viewModels()
+    private val directoryVM: DirectoryTreeVM by viewModels{DirectoryTreeVMFactory{
+        uri -> DocumentFile.fromTreeUri(this, uri) ?: run {
+            Toast.makeText(this, "Failed to open directory: $uri", Toast.LENGTH_LONG).show()
+            null
+        }
+    }}
 
     private val openDocumentLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocument()
@@ -119,8 +128,7 @@ class MainActivity : ComponentActivity() {
         fileVM.fileUri.value = uri
     }
     private fun updateCurrentDirectory(uri: Uri) {
-        val subDir = DirectoryEntry(uri, emptyList())
-        directoryVM.currentEntry.value = DirectoryEntry(uri, listOf(subDir, subDir))
+        directoryVM.currentEntry.value = directoryVM.directoryEntry(uri).getOrNull()
     }
 
     private fun readTextFromUri(uri: Uri) {
@@ -176,18 +184,26 @@ fun MainScreen(
 
 @Composable
 fun DirectoryTreeMenu(open: () -> Unit, directoryVM: DirectoryTreeVM) {
-    val currentDirectory by directoryVM.currentEntry.collectAsState()
-    Button(onClick = open) {
-        Text(text = "Open directory")
+    val currentDirectory: DirectoryEntry? by directoryVM.currentEntry.collectAsState()
+    Column(modifier = Modifier
+                .fillMaxHeight()
+                .background(BackgroundColor)
+                .padding(8.dp)
+    ) {
+        Button(onClick = open) {
+            Text(text = "Open directory")
+        }
+        currentDirectory?.let {
+            DirectoryTree(it)
+        }
     }
-    DirectoryTree(currentDirectory)
 }
 @Composable
 fun DirectoryTree(entry: DirectoryEntry, padding: Int = 0) {
     Column(modifier = Modifier.padding(start = padding.dp)) {
-        Text(text = entry.name.toString(), style = MaterialTheme.typography.bodyMedium)
+        Text(text = entry.name(), style = MaterialTheme.typography.bodyMedium, color = Color.Black)
 
-        entry.subEntries.forEach { subEntry ->
+        entry.subEntries().forEach { subEntry ->
             DirectoryTree(subEntry, padding+DirectoryTreePaddingIncrement)
         }
     }
