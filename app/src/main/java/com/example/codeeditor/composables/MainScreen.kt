@@ -63,6 +63,7 @@ fun MainScreen(
             DirectoryTreeMenu(openDirectory, directoryVM, onEntryClicked)
         }
 
+        // slider to manage code and directory ratio
         Box(
             modifier = Modifier
                 .width(5.dp)
