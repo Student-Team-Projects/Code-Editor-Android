@@ -13,3 +13,4 @@ public val CornerRadius = 8.dp
 public const val DirectoryTreePaddingIncrement = 8
 public val searchingExtensions = arrayOf("text/plain", "text/x-c", "text/x-java-source", "text/x-python")
 public const val saveAsDefaultExtension = "text/plain"
+public const val epsilon = 10e-6f

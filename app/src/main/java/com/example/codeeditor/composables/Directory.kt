@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -23,7 +24,7 @@ import com.example.codeeditor.viewmodels.DirectoryTreeVM
 fun DirectoryTreeMenu(open: () -> Unit, directoryVM: DirectoryTreeVM, onEntryClicked:(DirectoryEntry) -> Unit) {
     val currentDirectory: DirectoryEntry? by directoryVM.currentEntry.collectAsState()
     Column(modifier = Modifier
-        .fillMaxHeight()
+        .fillMaxSize()
         .background(BackgroundColor)
         .padding(8.dp)
     ) {

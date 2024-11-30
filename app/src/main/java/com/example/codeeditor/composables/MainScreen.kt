@@ -1,26 +1,44 @@
 package com.example.codeeditor.composables
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.dp
 import com.example.codeeditor.constants.*
 import com.example.codeeditor.viewmodels.CodeVM
 import com.example.codeeditor.viewmodels.DirectoryEntry
 import com.example.codeeditor.viewmodels.DirectoryTreeVM
+
+private const val dragSpeed = 2000f
+private const val minDirectoryFraction = epsilon
+private const val normalDirectoryFraction = 0.2f
+private const val minCodeFraction = 0.35f
 
 @Composable
 fun MainScreen(
@@ -32,15 +50,46 @@ fun MainScreen(
     directoryVM: DirectoryTreeVM,
     onEntryClicked: (DirectoryEntry) -> Unit
 ) {
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    var directoryTreeWidthFraction by remember { mutableFloatStateOf(0.3f) }
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
+    Row(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxHeight()
+                .weight(directoryTreeWidthFraction)
+        ) {
             DirectoryTreeMenu(openDirectory, directoryVM, onEntryClicked)
         }
-    ) {
-        ScreenLayout(codeVM, openFile, save, saveAs)
+
+        Box(
+            modifier = Modifier
+                .width(5.dp)
+                .fillMaxHeight()
+                .pointerInput(Unit) {
+                    detectHorizontalDragGestures { _, dragAmount ->
+                        directoryTreeWidthFraction = (directoryTreeWidthFraction + dragAmount / dragSpeed).coerceIn(
+                            minDirectoryFraction, 1f- minCodeFraction)
+                    }
+                }
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onDoubleTap = {
+                            directoryTreeWidthFraction = normalDirectoryFraction
+                        }
+                    )
+                }
+                .background(Color.Gray)
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxHeight()
+                .weight(1f-directoryTreeWidthFraction)
+        ) {
+            ScreenLayout(codeVM, openFile, save, saveAs)
+        }
     }
 }
 
