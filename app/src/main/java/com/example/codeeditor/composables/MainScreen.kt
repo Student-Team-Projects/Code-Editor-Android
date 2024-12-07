@@ -15,10 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -111,14 +108,32 @@ fun ScreenLayout(codeVM: CodeVM, open: () -> Unit, save:() -> Unit, saveAs: () -
 
 @Composable
 fun ButtonRow(codeVM: CodeVM, open: ()->Unit, save:() -> Unit, saveAs: () -> Unit) {
-    Row(
+    var isMenuVisible by remember { mutableStateOf(false) }
+
+    val columnHeight = if (isMenuVisible) 100.dp else 35.dp
+
+    Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(ButtonRowPadding),
-        horizontalArrangement = Arrangement.SpaceEvenly
+            .height(columnHeight)
+            .background(BackgroundColor),
+        verticalArrangement = Arrangement.SpaceEvenly,
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Button(onClick = open) { Text("Open") }
-        Button(onClick = save) { Text("Save") }
-        Button(onClick = saveAs) { Text("Save as") }
+        Button(onClick = { isMenuVisible = !isMenuVisible} ){
+            Text(if (isMenuVisible) "Hide Menu" else "Show Menu")
+        }
+
+        if(isMenuVisible){
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(ButtonRowPadding),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Button(onClick = open) { Text("Open") }
+                Button(onClick = save) { Text("Save") }
+                Button(onClick = saveAs) { Text("Save as") }
+            }
+        }
     }
 }
