@@ -15,10 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -30,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.codeeditor.constants.*
 import com.example.codeeditor.viewmodels.CodeVM
 import com.example.codeeditor.viewmodels.DirectoryEntry
@@ -111,6 +109,39 @@ fun ScreenLayout(codeVM: CodeVM, open: () -> Unit, save:() -> Unit, saveAs: () -
 
 @Composable
 fun ButtonRow(codeVM: CodeVM, open: ()->Unit, save:() -> Unit, saveAs: () -> Unit) {
+    var isMenuVisible by remember { mutableStateOf(false) }
+
+    val targetHeight = if (isMenuVisible) 100.dp else 30.dp
+
+    Column(
+        modifier = Modifier
+            .height(targetHeight)
+            .background(BackgroundColor),
+        verticalArrangement = Arrangement.SpaceEvenly,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        MenuToggleButton(isMenuVisible = isMenuVisible) {
+            isMenuVisible = !isMenuVisible
+        }
+
+        if (isMenuVisible) {
+            MenuActions(open, save, saveAs)
+        }
+    }
+}
+
+@Composable
+private fun MenuToggleButton(isMenuVisible: Boolean, onToggle: () -> Unit) {
+    Button(onClick = onToggle) {
+        Text(
+            text = if (isMenuVisible) "Hide Menu" else "Show Menu",
+            fontSize = if (isMenuVisible) 14.sp else 10.sp
+        )
+    }
+}
+
+@Composable
+private fun MenuActions(open: () -> Unit, save: () -> Unit, saveAs: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
