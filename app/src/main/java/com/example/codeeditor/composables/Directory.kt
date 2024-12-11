@@ -1,5 +1,6 @@
 package com.example.codeeditor.composables
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -15,27 +16,69 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.example.codeeditor.activities.MainActivity
 import com.example.codeeditor.constants.BackgroundColor
 import com.example.codeeditor.constants.DirectoryTreePaddingIncrement
 import com.example.codeeditor.viewmodels.DirectoryEntry
 import com.example.codeeditor.viewmodels.DirectoryTreeVM
 
 @Composable
-fun DirectoryTreeMenu(open: () -> Unit, directoryVM: DirectoryTreeVM, onEntryClicked:(DirectoryEntry) -> Unit) {
+fun DirectoryTreeMenu(
+    open: () -> Unit,
+    directoryVM: DirectoryTreeVM,
+    onEntryClicked: (DirectoryEntry) -> Unit,
+    gitInit: (Uri) -> Unit,
+    gitAdd: (Uri) -> Unit,
+    gitCommit: (Uri, String) -> Unit,
+    gitStatus: (Uri) -> Unit
+) {
     val currentDirectory: DirectoryEntry? by directoryVM.currentEntry.collectAsState()
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .background(BackgroundColor)
-        .padding(8.dp)
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BackgroundColor)
+            .padding(8.dp)
     ) {
         Button(onClick = open) {
-            Text(text = "Open directory")
+            Text(text = "Open Directory")
         }
+
+        Button(onClick = {
+            currentDirectory?.let { gitInit(it.uri()) }
+        }) {
+            Text(text = "Git Init")
+        }
+
+        Button(onClick = {
+            currentDirectory?.let { gitAdd(it.uri()) }
+        }) {
+            Text(text = "Git Add")
+        }
+
+        Button(onClick = {
+            currentDirectory?.let {
+                gitCommit(it.uri(), "Initial commit")
+            }
+        }) {
+            Text(text = "Git Commit")
+        }
+
+        Button(onClick = {
+            currentDirectory?.let { gitStatus(it.uri()) }
+        }) {
+            Text(text = "Git Status")
+        }
+
         currentDirectory?.let {
             DirectoryTree(it, onEntryClicked)
         }
     }
 }
+
+
+
+
 
 @Composable
 fun DirectoryTree(entry: DirectoryEntry, onEntryClicked:(DirectoryEntry) -> Unit, padding: Int = 0) {

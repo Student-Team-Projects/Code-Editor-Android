@@ -1,5 +1,6 @@
 package com.example.codeeditor.composables
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -46,7 +47,11 @@ fun MainScreen(
     saveAs: () -> Unit,
     openDirectory: () -> Unit,
     directoryVM: DirectoryTreeVM,
-    onEntryClicked: (DirectoryEntry) -> Unit
+    onEntryClicked: (DirectoryEntry) -> Unit,
+    gitInit: (Uri) -> Unit,
+    gitAdd: (Uri) -> Unit,
+    gitCommit: (Uri, String) -> Unit,
+    gitStatus: (Uri) -> Unit
 ) {
     var directoryTreeWidthFraction by remember { mutableFloatStateOf(0.3f) }
 
@@ -58,7 +63,8 @@ fun MainScreen(
                 .fillMaxHeight()
                 .weight(directoryTreeWidthFraction)
         ) {
-            DirectoryTreeMenu(openDirectory, directoryVM, onEntryClicked)
+            DirectoryTreeMenu(openDirectory, directoryVM, onEntryClicked, gitInit, gitAdd,
+                gitCommit, gitStatus)
         }
 
         // slider to manage code and directory ratio

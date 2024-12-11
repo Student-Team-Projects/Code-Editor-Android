@@ -1,5 +1,5 @@
 package com.example.codeeditor.activities
-
+import org.eclipse.jgit.api.Git
 import DirectoryTreeVMFactory
 import android.net.Uri
 import android.os.Bundle
@@ -37,19 +37,16 @@ import com.example.codeeditor.viewmodels.CodeVM
 import com.example.codeeditor.viewmodels.DirectoryEntry
 import com.example.codeeditor.viewmodels.DirectoryTreeVM
 import com.example.codeeditor.viewmodels.FileVM
-import java.io.BufferedReader
-import java.io.FileNotFoundException
-import java.io.InputStreamReader
-import java.io.OutputStreamWriter
+import java.io.*
 
 class MainActivity : ComponentActivity() {
     private val codeVM: CodeVM by viewModels()
     private val fileVM: FileVM by viewModels()
     private val directoryVM: DirectoryTreeVM by viewModels{DirectoryTreeVMFactory{
-        uri -> DocumentFile.fromTreeUri(this, uri) ?: run {
-            Toast.makeText(this, "Failed to open directory: $uri", Toast.LENGTH_LONG).show()
-            null
-        }
+            uri -> DocumentFile.fromTreeUri(this, uri) ?: run {
+        Toast.makeText(this, "Failed to open directory: $uri", Toast.LENGTH_LONG).show()
+        null
+    }
     }}
 
     private val openDocumentLauncher = registerForActivityResult(
@@ -89,7 +86,11 @@ class MainActivity : ComponentActivity() {
                     MainScreen(codeVM=codeVM, openFile=::openDocumentPicker,
                         saveAs=::createFilePicker, save=::saveCodeToFile,
                         directoryVM=directoryVM, openDirectory=::openDirectoryPicker,
-                        onEntryClicked=::onEntryClicked
+                        onEntryClicked=::onEntryClicked, gitInit = ::initializeGitRepository,
+                        gitAdd = ::gitAdd,
+                        gitCommit = ::gitCommit,
+                        gitStatus = ::gitStatus
+
                     )
                 }
             }
@@ -150,4 +151,99 @@ class MainActivity : ComponentActivity() {
             e.printStackTrace()
         }
     }
+
+
+    private fun initializeGitRepository(uri: Uri) {
+        try {
+            val currentDirectory = DocumentFile.fromTreeUri(this, uri)
+            currentDirectory?.let { dir ->
+                val gitDirectoryName = "${dir.name}_git"
+                val gitDirectory = dir.createDirectory(gitDirectoryName)
+
+                if (gitDirectory == null) {
+                    Toast.makeText(this, "Failed to create Git directory", Toast.LENGTH_SHORT).show()
+                    return
+                }
+
+                val localGitDir = File(filesDir, gitDirectoryName)
+                if (!localGitDir.exists()) localGitDir.mkdirs()
+
+                Git.init().setDirectory(localGitDir).call()
+
+                Toast.makeText(
+                    this,
+                    "Git repository initialized at: ${localGitDir.absolutePath}",
+                    Toast.LENGTH_LONG
+                ).show()
+            } ?: run {
+                Toast.makeText(this, "Invalid directory for Git init", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            Toast.makeText(this, "Failed to initialize Git: ${e.message}", Toast.LENGTH_LONG).show()
+            e.printStackTrace()
+        }
+    }
+
+    private fun getLocalGitDirectory(uri: Uri): File {
+        val documentFile = DocumentFile.fromTreeUri(this, uri)
+        val gitDirName = "${documentFile?.name}_git"
+
+        return File(filesDir, gitDirName)
+    }
+
+
+    private fun gitAdd(uri: Uri) {
+
+    }
+
+    private fun gitCommit(uri: Uri, commitMessage: String) {
+
+    }
+
+    private fun gitStatus(uri: Uri) {
+        try {
+            val localGitDir = getLocalGitDirectory(uri)
+            val git = Git.open(localGitDir)
+
+            val status = git.status().call()
+
+            val statusMessage = StringBuilder()
+
+            if (status.hasUncommittedChanges()) {
+                statusMessage.append("Uncommitted Changes:\n")
+            }
+
+            if (status.untracked.isNotEmpty()) {
+                statusMessage.append("Untracked Files:\n")
+                status.untracked.forEach { statusMessage.append("- $it\n") }
+            }
+
+            if (status.modified.isNotEmpty()) {
+                statusMessage.append("Modified Files:\n")
+                status.modified.forEach { statusMessage.append("- $it\n") }
+            }
+
+            if (status.added.isNotEmpty()) {
+                statusMessage.append("Added Files:\n")
+                status.added.forEach { statusMessage.append("- $it\n") }
+            }
+
+            if (statusMessage.isEmpty()) {
+                statusMessage.append("No changes. Working tree is clean.")
+            }
+
+            Toast.makeText(this, statusMessage.toString(), Toast.LENGTH_LONG).show()
+        } catch (e: Exception) {
+            Toast.makeText(this, "Failed to check status: ${e.message}", Toast.LENGTH_LONG).show()
+            e.printStackTrace()
+        }
+    }
+
+
+
+
+
+
+
+
 }
