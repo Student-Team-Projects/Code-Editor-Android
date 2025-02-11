@@ -27,6 +27,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import android.app.AlertDialog
+import android.content.Context
+import com.example.codeeditor.activities.MainActivity
 import com.example.codeeditor.constants.*
 import com.example.codeeditor.viewmodels.CodeVM
 import com.example.codeeditor.viewmodels.DirectoryEntry
@@ -45,9 +49,13 @@ fun MainScreen(
     saveAs: () -> Unit,
     openDirectory: () -> Unit,
     directoryVM: DirectoryTreeVM,
-    onEntryClicked: (DirectoryEntry) -> Unit
+    onEntryClicked: (DirectoryEntry) -> Unit,
+    createFile: () -> Unit,
+    exitApp: () -> Unit,
+    mainActivity: MainActivity
 ) {
     var directoryTreeWidthFraction by remember { mutableFloatStateOf(0.3f) }
+    var autosaveState = false
 
     Row(
         modifier = Modifier.fillMaxSize()
@@ -57,7 +65,10 @@ fun MainScreen(
                 .fillMaxHeight()
                 .weight(directoryTreeWidthFraction)
         ) {
-            DirectoryTreeMenu(openDirectory, directoryVM, onEntryClicked)
+            DirectoryTreeMenu(openDirectory, directoryVM) { d ->
+                if(autosaveState) save.invoke()
+                onEntryClicked.invoke(d)
+            }
         }
 
         // slider to manage code and directory ratio
@@ -86,13 +97,20 @@ fun MainScreen(
                 .fillMaxHeight()
                 .weight(1f-directoryTreeWidthFraction)
         ) {
-            ScreenLayout(codeVM, openFile, save, saveAs)
+            ScreenLayout(codeVM, openFile, save, {
+                saveAs.invoke()
+            }, {autosaveState = !autosaveState}, exitApp,
+                {
+                    createFile.invoke()
+                }, mainActivity)
         }
     }
 }
 
 @Composable
-fun ScreenLayout(codeVM: CodeVM, open: () -> Unit, save:() -> Unit, saveAs: () -> Unit) {
+fun ScreenLayout(codeVM: CodeVM, open: () -> Unit, save:() -> Unit, saveAs: () -> Unit,
+                 updateAutosaveState: () -> Unit, exitApp: () -> Unit, createFile: () -> Unit,
+                 mainActivity: MainActivity) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -102,38 +120,142 @@ fun ScreenLayout(codeVM: CodeVM, open: () -> Unit, save:() -> Unit, saveAs: () -
     ) {
         CodeArea(modifier= Modifier.weight(1.0f), codeVM)
         Spacer(modifier = Modifier.height(ButtonTextFieldSpacing))
-        ButtonRow(codeVM, open, save, saveAs)
+        ButtonRow(codeVM, open, save, saveAs, updateAutosaveState,
+            exitApp, createFile, mainActivity)
     }
 }
 
-@Composable
-fun ButtonRow(codeVM: CodeVM, open: ()->Unit, save:() -> Unit, saveAs: () -> Unit) {
-    var isMenuVisible by remember { mutableStateOf(false) }
 
-    val columnHeight = if (isMenuVisible) 100.dp else 35.dp
+@Composable
+fun ButtonRow(codeVM: CodeVM, open: ()->Unit, save:() -> Unit, saveAs: () -> Unit,
+              updateAutosaveState: ()->Unit, exitApp: () -> Unit, createFile: () -> Unit,
+              mainActivity: MainActivity) {
+    var menuVisibility by remember { mutableStateOf(buttonRowState.HIDE) }
+    var isAutosaveOn by remember { mutableStateOf(false) }
+
+    val targetHeight = when(menuVisibility){
+        buttonRowState.HIDE -> 30.dp
+        buttonRowState.SHOW -> 230.dp
+        buttonRowState.SETTINGS -> 100.dp
+    }
 
     Column(
         modifier = Modifier
-            .height(columnHeight)
+            .height(targetHeight)
             .background(BackgroundColor),
         verticalArrangement = Arrangement.SpaceEvenly,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Button(onClick = { isMenuVisible = !isMenuVisible} ){
-            Text(if (isMenuVisible) "Hide Menu" else "Show Menu")
-        }
-
-        if(isMenuVisible){
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(ButtonRowPadding),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Button(onClick = open) { Text("Open") }
-                Button(onClick = save) { Text("Save") }
-                Button(onClick = saveAs) { Text("Save as") }
+        when(menuVisibility){
+            buttonRowState.HIDE -> {
+                MenuToggleButton(menuVisibility = menuVisibility) {
+                    menuVisibility = buttonRowState.SHOW
+                }
+            }
+            buttonRowState.SHOW -> {
+                MenuToggleButton(menuVisibility = menuVisibility) {
+                    menuVisibility = buttonRowState.HIDE
+                }
+                MenuActions(open, save, saveAs,
+                    { menuVisibility = buttonRowState.SETTINGS },
+                    exitApp, createFile, mainActivity
+                    )
+            }
+            buttonRowState.SETTINGS -> {
+                SettingMenu({
+                    updateAutosaveState.invoke()
+                    isAutosaveOn = !isAutosaveOn
+                            },
+                    isAutosaveOn,
+                    { menuVisibility = buttonRowState.SHOW  })
             }
         }
     }
+}
+
+@Composable
+private fun MenuToggleButton(menuVisibility: buttonRowState, onToggle: () -> Unit) {
+    Button(onClick = onToggle) {
+        Text(
+            text = if (menuVisibility == buttonRowState.HIDE) "Show Menu" else "Hide Menu",
+            fontSize = if (menuVisibility == buttonRowState.SHOW) 14.sp else 10.sp
+        )
+    }
+}
+
+@Composable
+private fun SettingMenu(autosaveAction: () -> Unit,
+                            autosaveState: Boolean, back: () -> Unit){
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(ButtonRowPadding),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.CenterVertically
+    ){
+        Text(text = "Autosave:", fontSize = 20.sp)
+        Button(onClick = autosaveAction){
+            Text(if (autosaveState) "Switch Off" else "Switch On")
+        }
+    }
+    Button(onClick = back) {
+        Text("Return")
+    }
+}
+
+@Composable
+private fun MenuActions(open: () -> Unit, save: () -> Unit, saveAs: () -> Unit, settings: () -> Unit,
+                        exit: () -> Unit, createFile: () -> Unit,mainActivity: MainActivity) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(ButtonRowPadding),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        Button(onClick = open) { Text("Open") }
+        Button(onClick = save) { Text("Save") }
+        Button(onClick = saveAs) { Text("Save as") }
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(ButtonRowPadding),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        Button(onClick = createFile){ Text("Create file") }
+        Button(onClick = settings){ Text("Settings") }
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(ButtonRowPadding),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        Button(onClick = { showDialogWithTwoButtons(context = mainActivity,
+        "All unsaved changes will be lost, do you wish to proceed?",
+            "Yes", "No", exit, {})} ){ Text("Exit app") }
+    }
+
+}
+
+private fun showDialogWithTwoButtons(context: Context, message: String,
+                                     positiveButtonText: String, negativeButtonText: String,
+                                     positiveAction: () -> Unit, negativeAction: () -> Unit) {
+    AlertDialog.Builder(context)
+        .setMessage(message)
+        .setPositiveButton(positiveButtonText) { dialog, _ ->
+            positiveAction()
+            dialog.dismiss()
+        }
+        .setNegativeButton(negativeButtonText) { dialog, _ ->
+            negativeAction()
+            dialog.dismiss()
+        }
+        .show()
+}
+
+enum class buttonRowState {
+    HIDE,
+    SHOW,
+    SETTINGS
 }
