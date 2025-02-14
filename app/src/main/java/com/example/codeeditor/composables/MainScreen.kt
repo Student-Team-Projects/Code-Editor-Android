@@ -55,7 +55,7 @@ fun MainScreen(
     mainActivity: MainActivity
 ) {
     var directoryTreeWidthFraction by remember { mutableFloatStateOf(0.3f) }
-    var autosaveState = false
+    var autosaveState = true
 
     Row(
         modifier = Modifier.fillMaxSize()
@@ -99,10 +99,12 @@ fun MainScreen(
         ) {
             ScreenLayout(codeVM, openFile, save, {
                 saveAs.invoke()
-            }, {autosaveState = !autosaveState}, exitApp,
+            }, {autosaveState = !autosaveState}, {
+                if(autosaveState) save.invoke()
+                exitApp.invoke() },
                 {
                     createFile.invoke()
-                }, mainActivity)
+                }, mainActivity, autosaveState)
         }
     }
 }
@@ -110,7 +112,7 @@ fun MainScreen(
 @Composable
 fun ScreenLayout(codeVM: CodeVM, open: () -> Unit, save:() -> Unit, saveAs: () -> Unit,
                  updateAutosaveState: () -> Unit, exitApp: () -> Unit, createFile: () -> Unit,
-                 mainActivity: MainActivity) {
+                 mainActivity: MainActivity, defaultAutosave: Boolean) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -121,7 +123,7 @@ fun ScreenLayout(codeVM: CodeVM, open: () -> Unit, save:() -> Unit, saveAs: () -
         CodeArea(modifier= Modifier.weight(1.0f), codeVM)
         Spacer(modifier = Modifier.height(ButtonTextFieldSpacing))
         ButtonRow(codeVM, open, save, saveAs, updateAutosaveState,
-            exitApp, createFile, mainActivity)
+            exitApp, createFile, mainActivity, defaultAutosave)
     }
 }
 
@@ -129,9 +131,9 @@ fun ScreenLayout(codeVM: CodeVM, open: () -> Unit, save:() -> Unit, saveAs: () -
 @Composable
 fun ButtonRow(codeVM: CodeVM, open: ()->Unit, save:() -> Unit, saveAs: () -> Unit,
               updateAutosaveState: ()->Unit, exitApp: () -> Unit, createFile: () -> Unit,
-              mainActivity: MainActivity) {
+              mainActivity: MainActivity, defaultAutosave: Boolean) {
     var menuVisibility by remember { mutableStateOf(buttonRowState.HIDE) }
-    var isAutosaveOn by remember { mutableStateOf(false) }
+    var isAutosaveOn by remember { mutableStateOf(defaultAutosave) }
 
     val targetHeight = when(menuVisibility){
         buttonRowState.HIDE -> 30.dp
@@ -232,7 +234,7 @@ private fun MenuActions(open: () -> Unit, save: () -> Unit, saveAs: () -> Unit, 
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         Button(onClick = { showDialogWithTwoButtons(context = mainActivity,
-        "All unsaved changes will be lost, do you wish to proceed?",
+        "All unsaved changes will be lost without autosave, do you wish to proceed?",
             "Yes", "No", exit, {})} ){ Text("Exit app") }
     }
 
