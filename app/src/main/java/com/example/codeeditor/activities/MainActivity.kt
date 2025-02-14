@@ -76,11 +76,14 @@ class MainActivity : ComponentActivity() {
         uri?.let {
             updateCurrentFile(it)
             saveCodeToFile()
+            directoryVM.update()
         }
     }
     private val createEmptyFile = registerForActivityResult(
         ActivityResultContracts.CreateDocument(saveAsDefaultExtension)
-    ){}
+    ){
+        directoryVM.update()
+    }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
