@@ -41,6 +41,7 @@ import java.io.BufferedReader
 import java.io.FileNotFoundException
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
+import kotlin.system.exitProcess
 
 class MainActivity : ComponentActivity() {
     private val codeVM: CodeVM by viewModels()
@@ -75,8 +76,15 @@ class MainActivity : ComponentActivity() {
         uri?.let {
             updateCurrentFile(it)
             saveCodeToFile()
+            directoryVM.update()
         }
     }
+    private val createEmptyFile = registerForActivityResult(
+        ActivityResultContracts.CreateDocument(saveAsDefaultExtension)
+    ){
+        directoryVM.update()
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,7 +97,9 @@ class MainActivity : ComponentActivity() {
                     MainScreen(codeVM=codeVM, openFile=::openDocumentPicker,
                         saveAs=::createFilePicker, save=::saveCodeToFile,
                         directoryVM=directoryVM, openDirectory=::openDirectoryPicker,
-                        onEntryClicked=::onEntryClicked
+                        onEntryClicked=::onEntryClicked, createFile=::createFile,
+                        exitApp=::exitApp,
+                        mainActivity = this
                     )
                 }
             }
@@ -101,6 +111,10 @@ class MainActivity : ComponentActivity() {
     }
     private fun openDirectoryPicker() {
         openDirectoryLauncher.launch(Uri.EMPTY)
+    }
+
+    private fun createFile() {
+        createEmptyFile.launch("newFile.txt")
     }
 
     private fun createFilePicker() {
@@ -149,5 +163,10 @@ class MainActivity : ComponentActivity() {
             Toast.makeText(this, "File not found", Toast.LENGTH_SHORT).show()
             e.printStackTrace()
         }
+    }
+
+    private fun exitApp() {
+        finishAndRemoveTask()
+        exitProcess(-1)
     }
 }
