@@ -12,32 +12,31 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.example.codeeditor.constants.BorderColor
 import com.example.codeeditor.constants.BorderThickness
 import com.example.codeeditor.constants.ButtonRowPadding
-import com.example.codeeditor.constants.CodeAreaBackgroundColor
 import com.example.codeeditor.constants.CornerRadius
+import com.example.codeeditor.constants.ColorGroups
 import com.example.codeeditor.viewmodels.CodeVM
 
 @Composable
-fun CodeArea(modifier: Modifier, codeVM: CodeVM) {
+fun CodeArea(modifier: Modifier, currentColorMode: String, codeVM: CodeVM) {
     Box(
         modifier = modifier
             .fillMaxSize()
             .padding(ButtonRowPadding)
-            .border(BorderThickness, BorderColor, RoundedCornerShape(CornerRadius))
-            .background(CodeAreaBackgroundColor)
+            .border(BorderThickness, ColorGroups[currentColorMode]!!.borderColor, RoundedCornerShape(CornerRadius))
+            .background(ColorGroups[currentColorMode]!!.codeAreaBackgroundColor)
     ) {
         TextField(
             value = codeVM.text.value,
             onValueChange = { newText: String -> codeVM.updateText(newText) },
             modifier = Modifier.fillMaxSize(),
             placeholder = {
-                Text(text = "// your code here", color= Color.Gray)
+                Text(text = "// your code here", color= ColorGroups[currentColorMode]!!.placeholderTextColor)
             },
             colors = TextFieldDefaults.colors(
-                focusedTextColor = Color.Black,
-                unfocusedTextColor = Color.Black,
+                focusedTextColor = ColorGroups[currentColorMode]!!.textColor,
+                unfocusedTextColor = ColorGroups[currentColorMode]!!.textColor,
                 unfocusedContainerColor = Color.Transparent,
                 focusedContainerColor = Color.Transparent
             )
