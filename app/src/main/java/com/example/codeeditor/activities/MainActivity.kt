@@ -1,8 +1,11 @@
 package com.example.codeeditor.activities
 
 import DirectoryTreeVMFactory
+import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -26,6 +29,8 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -42,16 +47,46 @@ import java.io.FileNotFoundException
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import kotlin.system.exitProcess
+import android.provider.Settings
+import androidx.core.app.ActivityCompat
+import android.Manifest
+
+
 
 class MainActivity : ComponentActivity() {
+
+    var showGitMenu by mutableStateOf(false)
+
+    private fun requestStoragePermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // Android 11+ requires MANAGE_EXTERNAL_STORAGE
+            if (!Environment.isExternalStorageManager()) {
+                val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+                intent.data = Uri.parse("package:$packageName")
+                startActivity(intent)
+            }
+        } else {
+            // Request WRITE_EXTERNAL_STORAGE for Android 10 and below
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                ),
+                1
+            )
+        }
+    }
+
     private val codeVM: CodeVM by viewModels()
-    private val fileVM: FileVM by viewModels()
+    val fileVM: FileVM by viewModels()
     private val directoryVM: DirectoryTreeVM by viewModels{DirectoryTreeVMFactory{
         uri -> DocumentFile.fromTreeUri(this, uri) ?: run {
             Toast.makeText(this, "Failed to open directory: $uri", Toast.LENGTH_LONG).show()
             null
         }
     }}
+
 
     private val openDocumentLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocument()
@@ -88,6 +123,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        requestStoragePermissions()
         setContent {
             CodeEditorTheme {
                 Surface(

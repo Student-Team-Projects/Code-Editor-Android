@@ -30,11 +30,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.app.AlertDialog
 import android.content.Context
+import android.net.Uri
+import android.widget.Toast
 import com.example.codeeditor.activities.MainActivity
 import com.example.codeeditor.constants.*
+import com.example.codeeditor.model.FileLogic
 import com.example.codeeditor.viewmodels.CodeVM
 import com.example.codeeditor.viewmodels.DirectoryEntry
 import com.example.codeeditor.viewmodels.DirectoryTreeVM
+import com.example.codeeditor.viewmodels.FileVM
 
 private const val dragSpeed = 2000f
 private const val minDirectoryFraction = epsilon
@@ -68,60 +72,74 @@ fun MainScreen(
     exitApp: () -> Unit,
     mainActivity: MainActivity
 ) {
-    var directoryTreeWidthFraction by remember { mutableFloatStateOf(0.3f) }
-    var currentColorMode by remember { mutableStateOf("Normal") }
-    var autosaveState = true
-
-    Row(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxHeight()
-                .weight(directoryTreeWidthFraction)
-        ) {
-            DirectoryTreeMenu(openDirectory, currentColorMode, directoryVM) { d ->
-                if(autosaveState) save.invoke()
-                onEntryClicked.invoke(d)
-            }
-        }
-
-        // slider to manage code and directory ratio
-        Box(
-            modifier = Modifier
-                .width(5.dp)
-                .fillMaxHeight()
-                .pointerInput(Unit) {
-                    detectHorizontalDragGestures { _, dragAmount ->
-                        directoryTreeWidthFraction = (directoryTreeWidthFraction + dragAmount / dragSpeed).coerceIn(
-                            minDirectoryFraction, 1f- minCodeFraction)
-                    }
-                }
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onDoubleTap = {
-                            directoryTreeWidthFraction = normalDirectoryFraction
-                        }
-                    )
-                }
-                .background(ColorGroups[currentColorMode]!!.backgroundColor)
+    if (mainActivity.showGitMenu) {
+        GitMenu(
+            directoryVM = directoryVM,
+            fileVM = mainActivity.fileVM,
+            codeVM = codeVM,
+            mainActivity = mainActivity,
+            onClose = { mainActivity.showGitMenu = false }
         )
-
-        Box(
-            modifier = Modifier
-                .fillMaxHeight()
-                .weight(1f-directoryTreeWidthFraction)
-        ) {
-            ScreenLayout(codeVM, currentColorMode,openFile, save, {
-                saveAs.invoke()
-            }, {autosaveState = !autosaveState}, {
-                if(autosaveState) save.invoke()
-                exitApp.invoke() },
-                {
-                    createFile.invoke()
-                }, mainActivity, autosaveState, ColorGroups[currentColorMode]!!.textColor,
-                { currentColorMode = if (currentColorMode == "Normal") "Dark" else
-                "Normal"})
+    } else {
+        var directoryTreeWidthFraction by remember { mutableFloatStateOf(0.3f) }
+        var currentColorMode by remember { mutableStateOf("Normal") }
+        var autosaveState = true
+        Row(modifier = Modifier.fillMaxSize()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .weight(directoryTreeWidthFraction)
+            ) {
+                DirectoryTreeMenu(openDirectory, currentColorMode, directoryVM) { d ->
+                    if (autosaveState) save.invoke()
+                    onEntryClicked.invoke(d)
+                }
+            }
+            Box(
+                modifier = Modifier
+                    .width(5.dp)
+                    .fillMaxHeight()
+                    .pointerInput(Unit) {
+                        detectHorizontalDragGestures { _, dragAmount ->
+                            directoryTreeWidthFraction =
+                                (directoryTreeWidthFraction + dragAmount / dragSpeed)
+                                    .coerceIn(minDirectoryFraction, 1f - minCodeFraction)
+                        }
+                    }
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onDoubleTap = {
+                                directoryTreeWidthFraction = normalDirectoryFraction
+                            }
+                        )
+                    }
+                    .background(ColorGroups[currentColorMode]!!.backgroundColor)
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .weight(1f - directoryTreeWidthFraction)
+            ) {
+                ScreenLayout(
+                    codeVM = codeVM,
+                    currentColorGroup = currentColorMode,
+                    open = openFile,
+                    save = save,
+                    saveAs = { saveAs.invoke() },
+                    updateAutosaveState = { autosaveState = !autosaveState },
+                    exitApp = {
+                        if (autosaveState) save.invoke()
+                        exitApp.invoke()
+                    },
+                    createFile = { createFile.invoke() },
+                    mainActivity = mainActivity,
+                    defaultAutosave = autosaveState,
+                    textColor = ColorGroups[currentColorMode]!!.textColor,
+                    modeChange = {
+                        currentColorMode = if (currentColorMode == "Normal") "Dark" else "Normal"
+                    }
+                )
+            }
         }
     }
 }
@@ -285,6 +303,64 @@ private fun SettingMenu(autosaveAction: () -> Unit, currentColorMode: String,
     }
 }
 
+@Composable
+fun GitMenu(
+    directoryVM: DirectoryTreeVM,
+    fileVM: FileVM,
+    codeVM: CodeVM,
+    mainActivity: MainActivity,
+    onClose: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(ButtonRowPadding)
+    ) {
+        Button(onClick = {
+            val currentDir = directoryVM.currentEntry.value
+            if (currentDir == null) {
+                Toast.makeText(mainActivity, "You need to open a directory first", Toast.LENGTH_SHORT).show()
+            } else {
+                val initResult = FileLogic.initGitRepository(mainActivity, currentDir.uri())
+                Toast.makeText(mainActivity, initResult, Toast.LENGTH_LONG).show()
+            }
+        }) {
+            Text("Initialize Git Repo")
+        }
+
+        Button(onClick = {
+            val currentFile = fileVM.fileUri.value
+            if (currentFile == null || currentFile == Uri.EMPTY) {
+                Toast.makeText(mainActivity, "No file open to add", Toast.LENGTH_SHORT).show()
+            } else {
+                val addResult = FileLogic.gitAdd(mainActivity, directoryVM.currentEntry.value?.uri(), currentFile)
+                Toast.makeText(mainActivity, addResult, Toast.LENGTH_LONG).show()
+            }
+        }) {
+            Text("Git Add Current File")
+        }
+
+        Button(onClick = {
+            val commitResult = FileLogic.gitCommit(mainActivity, directoryVM.currentEntry.value?.uri(), "Commit from app")
+            Toast.makeText(mainActivity, commitResult, Toast.LENGTH_LONG).show()
+        }) {
+            Text("Git Commit")
+        }
+
+        Button(onClick = {
+            val pushResult = FileLogic.gitPush(mainActivity, directoryVM.currentEntry.value?.uri())
+            Toast.makeText(mainActivity, pushResult, Toast.LENGTH_LONG).show()
+        }) {
+            Text("Git Push")
+        }
+
+        Button(onClick = onClose) {
+            Text("Close Git Menu")
+        }
+    }
+}
+
+
 /**
     Function setting layout of main menu.
     @param open: action triggered when button for opening file is clicked
@@ -295,8 +371,15 @@ private fun SettingMenu(autosaveAction: () -> Unit, currentColorMode: String,
     @param createFile: action triggered when button for creating file is clicked
  */
 @Composable
-private fun MenuActions(open: () -> Unit, save: () -> Unit, saveAs: () -> Unit, settings: () -> Unit,
-                        exit: () -> Unit, createFile: () -> Unit,mainActivity: MainActivity) {
+private fun MenuActions(
+    open: () -> Unit,
+    save: () -> Unit,
+    saveAs: () -> Unit,
+    settings: () -> Unit,
+    exit: () -> Unit,
+    createFile: () -> Unit,
+    mainActivity: MainActivity
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -313,8 +396,11 @@ private fun MenuActions(open: () -> Unit, save: () -> Unit, saveAs: () -> Unit, 
             .padding(ButtonRowPadding),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        Button(onClick = createFile){ Text("Create file") }
-        Button(onClick = settings){ Text("Settings") }
+        Button(onClick = createFile) { Text("Create file") }
+        Button(onClick = settings) { Text("Settings") }
+        Button(onClick = { mainActivity.showGitMenu = true }) {
+            Text("Git")
+        }
     }
     Row(
         modifier = Modifier
@@ -322,12 +408,21 @@ private fun MenuActions(open: () -> Unit, save: () -> Unit, saveAs: () -> Unit, 
             .padding(ButtonRowPadding),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        Button(onClick = { showDialogWithTwoButtons(context = mainActivity,
-        "All unsaved changes will be lost without autosave, do you wish to proceed?",
-            "Yes", "No", exit, {})} ){ Text("Exit app") }
+        Button(
+            onClick = {
+                showDialogWithTwoButtons(
+                    context = mainActivity,
+                    message = "All unsaved changes will be lost without autosave, do you wish to proceed?",
+                    positiveButtonText = "Yes",
+                    negativeButtonText = "No",
+                    positiveAction = exit,
+                    negativeAction = {}
+                )
+            }
+        ) { Text("Exit app") }
     }
-
 }
+
 
 /**
     function building and showing dialog window with two buttons:
