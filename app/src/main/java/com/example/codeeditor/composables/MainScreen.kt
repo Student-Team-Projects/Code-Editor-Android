@@ -41,6 +41,20 @@ private const val minDirectoryFraction = epsilon
 private const val normalDirectoryFraction = 0.2f
 private const val minCodeFraction = 0.35f
 
+/**
+    Function setting layout of main screen of app.
+    @param codeVM: reference to CodeVM object
+    @param openFile: action triggering process of opening file
+    @param save: action triggering process of saving file
+    @param saveAs: action triggering saving new file
+    @param openDirectory: action opening directory in app
+    @param directoryVM: reference to directoryVM object
+    @param onEntryCLicked: action triggered when entry in directory tree is clicked
+    @param createFile: action triggering process of creating new file
+    @param exitApp: action exiting app
+    @param mainActivity: reference to MainActivity of app
+ */
+
 @Composable
 fun MainScreen(
     codeVM: CodeVM,
@@ -112,6 +126,22 @@ fun MainScreen(
     }
 }
 
+/**
+    Function setting layout of screen: part of app with CodeArea and menu.
+    @param codeVM: reference to object of class CodeVM
+    @param currentColorGroup: String setting current color mode of app
+    @param open: action triggering process of opening file
+    @param save: action triggering process of saving file
+    @param saveAs: action triggering process of saving new file
+    @param updateAutosaveState: action changing state of autosave
+    @param exitApp: action exiting app
+    @param createFile: action triggering process of creating file
+    @param mainActivity: reference to MainActivity of app
+    @param defaultAutosave: Boolean setting default autosave state
+    @param textColor
+    @param modeChange: action triggering change of app color mode
+ */
+
 @Composable
 fun ScreenLayout(codeVM: CodeVM, currentColorGroup: String, open: () -> Unit, save:() -> Unit, saveAs: () -> Unit,
                  updateAutosaveState: () -> Unit, exitApp: () -> Unit, createFile: () -> Unit,
@@ -131,13 +161,29 @@ fun ScreenLayout(codeVM: CodeVM, currentColorGroup: String, open: () -> Unit, sa
     }
 }
 
+/**
+    Function managing layout of menu, currently three states: HIDE, SHOW and SETTINGS.
+    @param codeVM: reference to object of CodeVM class
+    @param currentColorMode: String setting current color mode of ButtonRow
+    @param save: action triggering process of saving file
+    @param saveAs: action triggering process of saving new file
+    @param updateAutosaveState: action changing autosave state
+    @param exitApp: action closing app
+    @param createFile: action triggering process of creating file
+    @param mainActivity: reference to MainActivity of app
+    @param defaultAutosave: Boolean setting default state of autosave
+    @param textColor
+    @param modeChange: action changing color mode of app
+ */
 
 @Composable
 fun ButtonRow(codeVM: CodeVM, currentColorMode: String,open: ()->Unit, save:() -> Unit, saveAs: () -> Unit,
               updateAutosaveState: ()->Unit, exitApp: () -> Unit, createFile: () -> Unit,
               mainActivity: MainActivity, defaultAutosave: Boolean, textColor: Color,
               modeChange: () -> Unit) {
+    //var setting visibility of menu, changing it changes menu mode
     var menuVisibility by remember { mutableStateOf(ButtonRowState.HIDE) }
+    //var setting state of autosave
     var isAutosaveOn by remember { mutableStateOf(defaultAutosave) }
 
     val targetHeight = when(menuVisibility){
@@ -182,6 +228,13 @@ fun ButtonRow(codeVM: CodeVM, currentColorMode: String,open: ()->Unit, save:() -
     }
 }
 
+/**
+    Function setting button showing/hiding menu.
+    @param menuVisibility: enum setting mode of menu, when MenuToggleButton is visible,
+                            menu can be in mode HIDE or SHOW
+    @param onToggle: action triggering change of visibility of menu
+ */
+
 @Composable
 private fun MenuToggleButton(menuVisibility: ButtonRowState, onToggle: () -> Unit) {
     Button(onClick = onToggle) {
@@ -191,6 +244,13 @@ private fun MenuToggleButton(menuVisibility: ButtonRowState, onToggle: () -> Uni
         )
     }
 }
+/**
+    Function setting layout of setting menu.
+    @param autosaveAction: function triggered when autosave mode is changed
+    @param currentColorMode: String setting current color mode of app
+    @param autosaveState: Boolean setting current autosave state
+    @param back: function triggering going back to main menu
+ */
 
 @Composable
 private fun SettingMenu(autosaveAction: () -> Unit, currentColorMode: String,
@@ -225,6 +285,15 @@ private fun SettingMenu(autosaveAction: () -> Unit, currentColorMode: String,
     }
 }
 
+/**
+    Function setting layout of main menu.
+    @param open: action triggered when button for opening file is clicked
+    @param save: action triggered when button for saving file is clicked
+    @param saveAs: action triggered when button for saving new file is clicked
+    @param settings: action triggered when button for opening setting menu is clicked
+    @param exit: action triggering exiting app
+    @param createFile: action triggered when button for creating file is clicked
+ */
 @Composable
 private fun MenuActions(open: () -> Unit, save: () -> Unit, saveAs: () -> Unit, settings: () -> Unit,
                         exit: () -> Unit, createFile: () -> Unit,mainActivity: MainActivity) {
@@ -260,6 +329,15 @@ private fun MenuActions(open: () -> Unit, save: () -> Unit, saveAs: () -> Unit, 
 
 }
 
+/**
+    function building and showing dialog window with two buttons:
+    @param context: Determines in which context window is shown
+    @param message: String which is shown in window
+    @param positiveButtonText: String which is shown on button triggering positiveAction
+    @param negativeButtonText: String which is shown on button triggering negativeAction
+    @param positiveAction: Function triggered when button with positiveButtonText is clicked
+    @param negativeAction: Function triggered when button with negativeButtonText is clicked
+ */
 private fun showDialogWithTwoButtons(context: Context, message: String,
                                      positiveButtonText: String, negativeButtonText: String,
                                      positiveAction: () -> Unit, negativeAction: () -> Unit) {
@@ -276,6 +354,11 @@ private fun showDialogWithTwoButtons(context: Context, message: String,
         .show()
 }
 
+/**
+    HIDE - ButtonRow is hidden, only toggle button visible
+    SHOW - ButtonRow is shown
+    SETTINGS - SettingMenu is shown
+ */
 enum class ButtonRowState {
     HIDE,
     SHOW,
