@@ -10,9 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
@@ -28,17 +26,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import android.app.AlertDialog
-import android.content.Context
-import android.net.Uri
-import android.widget.Toast
 import com.example.codeeditor.activities.MainActivity
 import com.example.codeeditor.constants.*
-import com.example.codeeditor.model.FileLogic
 import com.example.codeeditor.viewmodels.CodeVM
 import com.example.codeeditor.viewmodels.DirectoryEntry
 import com.example.codeeditor.viewmodels.DirectoryTreeVM
-import com.example.codeeditor.viewmodels.FileVM
 
 private const val dragSpeed = 2000f
 private const val minDirectoryFraction = epsilon
@@ -70,27 +62,30 @@ fun MainScreen(
     onEntryClicked: (DirectoryEntry) -> Unit,
     createFile: () -> Unit,
     exitApp: () -> Unit,
+    currentLanguage: String,
     mainActivity: MainActivity
 ) {
+    var directoryTreeWidthFraction by remember { mutableFloatStateOf(0.3f) }
+    var currentColorMode by remember { mutableStateOf("Normal") }
+    var autosaveState = true
     if (mainActivity.showGitMenu) {
         GitMenu(
             directoryVM = directoryVM,
             fileVM = mainActivity.fileVM,
             codeVM = codeVM,
             mainActivity = mainActivity,
+            currentLanguage = currentLanguage,
             onClose = { mainActivity.showGitMenu = false }
         )
     } else {
-        var directoryTreeWidthFraction by remember { mutableFloatStateOf(0.3f) }
-        var currentColorMode by remember { mutableStateOf("Normal") }
-        var autosaveState = true
+
         Row(modifier = Modifier.fillMaxSize()) {
             Box(
                 modifier = Modifier
                     .fillMaxHeight()
                     .weight(directoryTreeWidthFraction)
             ) {
-                DirectoryTreeMenu(openDirectory, currentColorMode, directoryVM) { d ->
+                DirectoryTreeMenu(openDirectory, currentColorMode, currentLanguage,directoryVM) { d ->
                     if (autosaveState) save.invoke()
                     onEntryClicked.invoke(d)
                 }
@@ -123,6 +118,7 @@ fun MainScreen(
                 ScreenLayout(
                     codeVM = codeVM,
                     currentColorGroup = currentColorMode,
+                    currentLanguage = currentLanguage,
                     open = openFile,
                     save = save,
                     saveAs = { saveAs.invoke() },
@@ -148,6 +144,7 @@ fun MainScreen(
     Function setting layout of screen: part of app with CodeArea and menu.
     @param codeVM: reference to object of class CodeVM
     @param currentColorGroup: String setting current color mode of app
+    @param currentLanguage: String setting current language
     @param open: action triggering process of opening file
     @param save: action triggering process of saving file
     @param saveAs: action triggering process of saving new file
@@ -161,7 +158,7 @@ fun MainScreen(
  */
 
 @Composable
-fun ScreenLayout(codeVM: CodeVM, currentColorGroup: String, open: () -> Unit, save:() -> Unit, saveAs: () -> Unit,
+fun ScreenLayout(codeVM: CodeVM, currentColorGroup: String, currentLanguage:String, open: () -> Unit, save:() -> Unit, saveAs: () -> Unit,
                  updateAutosaveState: () -> Unit, exitApp: () -> Unit, createFile: () -> Unit,
                  mainActivity: MainActivity, defaultAutosave: Boolean, textColor: Color,
                  modeChange: () -> Unit) {
@@ -172,9 +169,10 @@ fun ScreenLayout(codeVM: CodeVM, currentColorGroup: String, open: () -> Unit, sa
         verticalArrangement = Arrangement.SpaceEvenly,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        CodeArea(modifier= Modifier.weight(1.0f), currentColorGroup, codeVM)
+        CodeArea(modifier= Modifier.weight(1.0f), currentColorGroup,
+            currentLanguage, codeVM)
         Spacer(modifier = Modifier.height(ButtonTextFieldSpacing))
-        ButtonRow(codeVM, currentColorGroup,open, save, saveAs, updateAutosaveState,
+        ButtonRow(codeVM, currentColorGroup, currentLanguage, open, save, saveAs, updateAutosaveState,
             exitApp, createFile, mainActivity, defaultAutosave, textColor, modeChange)
     }
 }
@@ -183,6 +181,7 @@ fun ScreenLayout(codeVM: CodeVM, currentColorGroup: String, open: () -> Unit, sa
     Function managing layout of menu, currently three states: HIDE, SHOW and SETTINGS.
     @param codeVM: reference to object of CodeVM class
     @param currentColorMode: String setting current color mode of ButtonRow
+    @param currentLanguage: String setting current language
     @param save: action triggering process of saving file
     @param saveAs: action triggering process of saving new file
     @param updateAutosaveState: action changing autosave state
@@ -195,7 +194,8 @@ fun ScreenLayout(codeVM: CodeVM, currentColorGroup: String, open: () -> Unit, sa
  */
 
 @Composable
-fun ButtonRow(codeVM: CodeVM, currentColorMode: String,open: ()->Unit, save:() -> Unit, saveAs: () -> Unit,
+fun ButtonRow(codeVM: CodeVM, currentColorMode: String, currentLanguage: String, open: ()->Unit, save:() -> Unit,
+              saveAs: () -> Unit,
               updateAutosaveState: ()->Unit, exitApp: () -> Unit, createFile: () -> Unit,
               mainActivity: MainActivity, defaultAutosave: Boolean, textColor: Color,
               modeChange: () -> Unit) {
@@ -206,8 +206,9 @@ fun ButtonRow(codeVM: CodeVM, currentColorMode: String,open: ()->Unit, save:() -
 
     val targetHeight = when(menuVisibility){
         ButtonRowState.HIDE -> 30.dp
-        ButtonRowState.SHOW -> 230.dp
-        ButtonRowState.SETTINGS -> 180.dp
+        ButtonRowState.SHOW -> LanguageMeasurementsMap[currentLanguage]!!.mainMenuMeasurements
+        ButtonRowState.SETTINGS -> LanguageMeasurementsMap[currentLanguage]!!.settingsMenuMeasurements
+        ButtonRowState.LANGUAGE_SETTINGS -> (50.dp * ((LanguageMap.size/3).toInt()+2))
     }
 
     Column(
@@ -219,17 +220,17 @@ fun ButtonRow(codeVM: CodeVM, currentColorMode: String,open: ()->Unit, save:() -
     ) {
         when(menuVisibility){
             ButtonRowState.HIDE -> {
-                MenuToggleButton(menuVisibility = menuVisibility) {
+                MenuToggleButton(menuVisibility = menuVisibility, currentLanguage) {
                     menuVisibility = ButtonRowState.SHOW
                 }
             }
             ButtonRowState.SHOW -> {
-                MenuToggleButton(menuVisibility = menuVisibility) {
+                MenuToggleButton(menuVisibility = menuVisibility, currentLanguage) {
                     menuVisibility = ButtonRowState.HIDE
                 }
                 MenuActions(open, save, saveAs,
                     { menuVisibility = ButtonRowState.SETTINGS },
-                    exitApp, createFile, mainActivity
+                    exitApp, createFile, currentLanguage, mainActivity
                     )
             }
             ButtonRowState.SETTINGS -> {
@@ -238,9 +239,13 @@ fun ButtonRow(codeVM: CodeVM, currentColorMode: String,open: ()->Unit, save:() -
                     isAutosaveOn = !isAutosaveOn
                             },
                     currentColorMode,
-                    isAutosaveOn,
+                    currentLanguage,
+                    isAutosaveOn, { menuVisibility = ButtonRowState.LANGUAGE_SETTINGS },
                     { menuVisibility = ButtonRowState.SHOW  },
                     modeChange)
+            }
+            ButtonRowState.LANGUAGE_SETTINGS -> {
+                LanguageMenu(currentLanguage, mainActivity) { menuVisibility = ButtonRowState.SETTINGS }
             }
         }
     }
@@ -250,212 +255,19 @@ fun ButtonRow(codeVM: CodeVM, currentColorMode: String,open: ()->Unit, save:() -
     Function setting button showing/hiding menu.
     @param menuVisibility: enum setting mode of menu, when MenuToggleButton is visible,
                             menu can be in mode HIDE or SHOW
+    @param currentLanguage: String setting current language
     @param onToggle: action triggering change of visibility of menu
  */
 
 @Composable
-private fun MenuToggleButton(menuVisibility: ButtonRowState, onToggle: () -> Unit) {
+private fun MenuToggleButton(menuVisibility: ButtonRowState, currentLanguage: String, onToggle: () -> Unit) {
     Button(onClick = onToggle) {
         Text(
-            text = if (menuVisibility == ButtonRowState.HIDE) "Show Menu" else "Hide Menu",
+            text = if (menuVisibility == ButtonRowState.HIDE) LanguageMap[currentLanguage]!!.showMenuText
+                else LanguageMap[currentLanguage]!!.hideMenuText,
             fontSize = if (menuVisibility == ButtonRowState.SHOW) 14.sp else 10.sp
         )
     }
 }
-/**
-    Function setting layout of setting menu.
-    @param autosaveAction: function triggered when autosave mode is changed
-    @param currentColorMode: String setting current color mode of app
-    @param autosaveState: Boolean setting current autosave state
-    @param back: function triggering going back to main menu
- */
-
-@Composable
-private fun SettingMenu(autosaveAction: () -> Unit, currentColorMode: String,
-                            autosaveState: Boolean, back: () -> Unit,
-                        modeChange: () -> Unit){
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(ButtonRowPadding),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
-    ){
-        Text(text = "Autosave:", fontSize = 20.sp, color = ColorGroups[currentColorMode]!!.textColor)
-        Button(onClick = autosaveAction){
-            Text(if (autosaveState) "Switch Off" else "Switch On")
-        }
-    }
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(ButtonRowPadding),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.CenterVertically
-    ){
-        Text(text = "Darkmode", fontSize = 20.sp, color = ColorGroups[currentColorMode]!!.textColor)
-        Button(onClick = modeChange) {
-            Text(if(currentColorMode == "Normal") "Switch On" else "Switch Off")
-        }
-    }
-    Button(onClick = back) {
-        Text("Return")
-    }
-}
-
-@Composable
-fun GitMenu(
-    directoryVM: DirectoryTreeVM,
-    fileVM: FileVM,
-    codeVM: CodeVM,
-    mainActivity: MainActivity,
-    onClose: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(ButtonRowPadding)
-    ) {
-        Button(onClick = {
-            val currentDir = directoryVM.currentEntry.value
-            if (currentDir == null) {
-                Toast.makeText(mainActivity, "You need to open a directory first", Toast.LENGTH_SHORT).show()
-            } else {
-                val initResult = FileLogic.initGitRepository(mainActivity, currentDir.uri())
-                Toast.makeText(mainActivity, initResult, Toast.LENGTH_LONG).show()
-            }
-        }) {
-            Text("Initialize Git Repo")
-        }
-
-        Button(onClick = {
-            val currentFile = fileVM.fileUri.value
-            if (currentFile == null || currentFile == Uri.EMPTY) {
-                Toast.makeText(mainActivity, "No file open to add", Toast.LENGTH_SHORT).show()
-            } else {
-                val addResult = FileLogic.gitAdd(mainActivity, directoryVM.currentEntry.value?.uri(), currentFile)
-                Toast.makeText(mainActivity, addResult, Toast.LENGTH_LONG).show()
-            }
-        }) {
-            Text("Git Add Current File")
-        }
-
-        Button(onClick = {
-            val commitResult = FileLogic.gitCommit(mainActivity, directoryVM.currentEntry.value?.uri(), "Commit from app")
-            Toast.makeText(mainActivity, commitResult, Toast.LENGTH_LONG).show()
-        }) {
-            Text("Git Commit")
-        }
-
-        Button(onClick = {
-            val pushResult = FileLogic.gitPush(mainActivity, directoryVM.currentEntry.value?.uri())
-            Toast.makeText(mainActivity, pushResult, Toast.LENGTH_LONG).show()
-        }) {
-            Text("Git Push")
-        }
-
-        Button(onClick = onClose) {
-            Text("Close Git Menu")
-        }
-    }
-}
 
 
-/**
-    Function setting layout of main menu.
-    @param open: action triggered when button for opening file is clicked
-    @param save: action triggered when button for saving file is clicked
-    @param saveAs: action triggered when button for saving new file is clicked
-    @param settings: action triggered when button for opening setting menu is clicked
-    @param exit: action triggering exiting app
-    @param createFile: action triggered when button for creating file is clicked
- */
-@Composable
-private fun MenuActions(
-    open: () -> Unit,
-    save: () -> Unit,
-    saveAs: () -> Unit,
-    settings: () -> Unit,
-    exit: () -> Unit,
-    createFile: () -> Unit,
-    mainActivity: MainActivity
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(ButtonRowPadding),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        Button(onClick = open) { Text("Open") }
-        Button(onClick = save) { Text("Save") }
-        Button(onClick = saveAs) { Text("Save as") }
-    }
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(ButtonRowPadding),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        Button(onClick = createFile) { Text("Create file") }
-        Button(onClick = settings) { Text("Settings") }
-        Button(onClick = { mainActivity.showGitMenu = true }) {
-            Text("Git")
-        }
-    }
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(ButtonRowPadding),
-        horizontalArrangement = Arrangement.SpaceEvenly
-    ) {
-        Button(
-            onClick = {
-                showDialogWithTwoButtons(
-                    context = mainActivity,
-                    message = "All unsaved changes will be lost without autosave, do you wish to proceed?",
-                    positiveButtonText = "Yes",
-                    negativeButtonText = "No",
-                    positiveAction = exit,
-                    negativeAction = {}
-                )
-            }
-        ) { Text("Exit app") }
-    }
-}
-
-
-/**
-    function building and showing dialog window with two buttons:
-    @param context: Determines in which context window is shown
-    @param message: String which is shown in window
-    @param positiveButtonText: String which is shown on button triggering positiveAction
-    @param negativeButtonText: String which is shown on button triggering negativeAction
-    @param positiveAction: Function triggered when button with positiveButtonText is clicked
-    @param negativeAction: Function triggered when button with negativeButtonText is clicked
- */
-private fun showDialogWithTwoButtons(context: Context, message: String,
-                                     positiveButtonText: String, negativeButtonText: String,
-                                     positiveAction: () -> Unit, negativeAction: () -> Unit) {
-    AlertDialog.Builder(context)
-        .setMessage(message)
-        .setPositiveButton(positiveButtonText) { dialog, _ ->
-            positiveAction()
-            dialog.dismiss()
-        }
-        .setNegativeButton(negativeButtonText) { dialog, _ ->
-            negativeAction()
-            dialog.dismiss()
-        }
-        .show()
-}
-
-/**
-    HIDE - ButtonRow is hidden, only toggle button visible
-    SHOW - ButtonRow is shown
-    SETTINGS - SettingMenu is shown
- */
-enum class ButtonRowState {
-    HIDE,
-    SHOW,
-    SETTINGS
-}

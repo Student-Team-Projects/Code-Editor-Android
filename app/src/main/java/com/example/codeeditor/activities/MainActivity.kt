@@ -56,6 +56,7 @@ import android.Manifest
 class MainActivity : ComponentActivity() {
 
     var showGitMenu by mutableStateOf(false)
+    var currentLanguage by mutableStateOf("Polski")
 
     private fun requestStoragePermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -82,7 +83,8 @@ class MainActivity : ComponentActivity() {
     val fileVM: FileVM by viewModels()
     private val directoryVM: DirectoryTreeVM by viewModels{DirectoryTreeVMFactory{
         uri -> DocumentFile.fromTreeUri(this, uri) ?: run {
-            Toast.makeText(this, "Failed to open directory: $uri", Toast.LENGTH_LONG).show()
+            Toast.makeText(this,
+                LanguageMap[currentLanguage]!!.failedToOpenDirectoryText+uri, Toast.LENGTH_LONG).show()
             null
         }
     }}
@@ -135,6 +137,7 @@ class MainActivity : ComponentActivity() {
                         directoryVM=directoryVM, openDirectory=::openDirectoryPicker,
                         onEntryClicked=::onEntryClicked, createFile=::createFile,
                         exitApp=::exitApp,
+                        currentLanguage = currentLanguage,
                         mainActivity = this
                     )
                 }
@@ -171,10 +174,12 @@ class MainActivity : ComponentActivity() {
                 val text = BufferedReader(InputStreamReader(inputStream)).readText()
                 codeVM.updateText(text)
             } ?: run {
-                Toast.makeText(this, "Failed to open file", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, LanguageMap[currentLanguage]!!.failedToOpenFileText,
+                    Toast.LENGTH_SHORT).show()
             }
         } catch (e: FileNotFoundException) {
-            Toast.makeText(this, "File not found", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, LanguageMap[currentLanguage]!!.fileNotFoundText,
+                Toast.LENGTH_SHORT).show()
             e.printStackTrace()
         }
     }
@@ -193,10 +198,12 @@ class MainActivity : ComponentActivity() {
                     writer.write(codeVM.text.value)
                 }
             } ?: run {
-                Toast.makeText(this, "Failed to save file", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, LanguageMap[currentLanguage]!!.failedToSaveFileText,
+                    Toast.LENGTH_SHORT).show()
             }
         } catch (e: FileNotFoundException) {
-            Toast.makeText(this, "File not found", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, LanguageMap[currentLanguage]!!.fileNotFoundText,
+                Toast.LENGTH_SHORT).show()
             e.printStackTrace()
         }
     }

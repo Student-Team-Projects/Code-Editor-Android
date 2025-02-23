@@ -24,13 +24,15 @@ import com.example.codeeditor.constants.DirectoryTreePaddingIncrement
 import com.example.codeeditor.viewmodels.DirectoryEntry
 import com.example.codeeditor.viewmodels.DirectoryTreeVM
 import com.example.codeeditor.constants.ColorGroups
+import com.example.codeeditor.constants.LanguageMap
 import kotlinx.coroutines.isActive
 import java.nio.file.FileSystems
 import java.nio.file.Paths
 import java.nio.file.StandardWatchEventKinds
 
 @Composable
-fun DirectoryTreeMenu(open: () -> Unit, currentColorMode: String,directoryVM: DirectoryTreeVM, onEntryClicked:(DirectoryEntry) -> Unit) {
+fun DirectoryTreeMenu(open: () -> Unit, currentColorMode: String, currentLanguage: String,
+                      directoryVM: DirectoryTreeVM, onEntryClicked:(DirectoryEntry) -> Unit) {
     val currentDirectory: DirectoryEntry? by directoryVM.currentEntry.collectAsState()
     var registerKey by remember { mutableStateOf(0) }
     directoryVM.register { registerKey++ }
@@ -40,7 +42,7 @@ fun DirectoryTreeMenu(open: () -> Unit, currentColorMode: String,directoryVM: Di
         .padding(8.dp)
     ) {
         Button(onClick = open) {
-            Text(text = "Open directory")
+            Text(text = LanguageMap[currentLanguage]!!.openDirectoryText)
         }
         currentDirectory?.let {
             key(registerKey){

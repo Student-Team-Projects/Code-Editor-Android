@@ -16,10 +16,12 @@ import com.example.codeeditor.constants.BorderThickness
 import com.example.codeeditor.constants.ButtonRowPadding
 import com.example.codeeditor.constants.CornerRadius
 import com.example.codeeditor.constants.ColorGroups
+import com.example.codeeditor.constants.LanguageMap
 import com.example.codeeditor.viewmodels.CodeVM
 
 @Composable
-fun CodeArea(modifier: Modifier, currentColorMode: String, codeVM: CodeVM) {
+fun CodeArea(modifier: Modifier, currentColorMode: String, currentLanguage: String,
+             codeVM: CodeVM) {
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -32,7 +34,8 @@ fun CodeArea(modifier: Modifier, currentColorMode: String, codeVM: CodeVM) {
             onValueChange = { newText: String -> codeVM.updateText(newText) },
             modifier = Modifier.fillMaxSize(),
             placeholder = {
-                Text(text = "// your code here", color= ColorGroups[currentColorMode]!!.placeholderTextColor)
+                Text(text = LanguageMap[currentLanguage]!!.emptyCodeAreaText,
+                    color= ColorGroups[currentColorMode]!!.placeholderTextColor)
             },
             colors = TextFieldDefaults.colors(
                 focusedTextColor = ColorGroups[currentColorMode]!!.textColor,
