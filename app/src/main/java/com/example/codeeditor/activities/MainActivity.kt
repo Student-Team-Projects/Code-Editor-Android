@@ -56,7 +56,7 @@ import android.Manifest
 class MainActivity : ComponentActivity() {
 
     var showGitMenu by mutableStateOf(false)
-    var currentLanguage by mutableStateOf("Polski")
+    var currentLanguage by mutableStateOf("English")
 
     private fun requestStoragePermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
