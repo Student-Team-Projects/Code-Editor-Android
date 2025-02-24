@@ -1,26 +1,58 @@
-# Code Editor for Android
+# Installation on Arch
 
-In our project, "CodeEditor for Android," our primary objective was to explore the capabilities of Android's file system and ensure seamless file handling within our application. Specifically, we aimed to develop an app capable of reading and writing files and directories without encountering any issues.
+First you need to download Android Studio from AUR.
+Here is the link to the package 
+https://aur.archlinux.org/packages/android-studio
 
-Here's a summary of our findings and solutions:
+If you have yay installed, you can just run the following command:
+```bash
+yay -S android-studio
+```
+If you don't have yay, you can install it by running the following command:
+```bash
+sudo pacman -S --needed git base-devel
+git clone https://aur.archlinux.org/yay.git
+cd yay
+makepkg -si
+```
+If you don't want to download yay, you can download the package manually from the link above. You can install it by running the following command:
+```bash
+git clone https://aur.archlinux.org/android-studio.git
+cd android-studio
+makepkg -si
+```
+Now you need to see what is the name of the package you have just installed. You can do it by running the following command:
+```bash
+ls
+```
+Now you need to install the package. You can do it by running the following command:
+```bash
+sudo pacman -U <package_name>
+```
 
-## Privacy Regulations in Android
+Now you can open Android Studio and install the necessary SDKs and tools. You will need SDK 14 and emulator to see our app on your computer.
 
-Recent privacy regulations in the Android ecosystem have significantly restricted access to user personal data and application source data. Applications are now prohibited from accessing private data belonging to other apps. However, access to public data remains available for reading and modification. Additionally, within an app's Internal Storage, it retains full control over its files.
+You will be able to run our app in android studio by opening the project and running it on the emulator.
 
-## File Modification and Saving Solution
 
-To solve the problem of changing and saving files, we implemented the following approach:
+# Features
+- Our app is simple code editor for android with smooth interface
+![](screenshots/main.png)
 
-1. **File Location**: Identify the desired file in the non-private external storage of the device.
-2. **File Transfer**: Copy the file to the local files of our application's private section.
-3. **Editing**: Modify the file as required.
-4. **Storage**: Save the edited file securely within the private data of our application.
+- You can open a menu with a bunch of actions, like managing files, entering settings, etc.
 
-We accomplished the first step by using the built-in Android file explorer, granting it read permissions in the External Storage. Subsequently, we saved the selected file in our Internal Storage, where we had already implemented convenient and effective data manipulation techniques.
+![](screenshots/menu.png)
 
-## Visual Interface and Usability
+- If you are going to work with project, you can open a dedicated folder for it, content of which will be displayed on the left. The directory tree refreshes automatically on any update.
 
-Our CodeEditor has a visually attractive interface like in modern IDEs. This interface not only provides a pleasant user experience but also serves as a solid foundation for the potential development of a full-fledged IDE on the Android platform. Even in its current form, our CodeEditor is well-equipped for efficient file management and editing tasks.
+![](screenshots/open_folder.png)
 
-In conclusion, our project has demonstrated effective strategies for navigating Android's file system regulations while providing users with a robust and user-friendly file editing experience.
+- Also we have a git menu that, unfortunately, doesn't work, but at least buttons look pretty fine
+
+![](screenshots/git_menu.png)
+
+- Last but not least, our app features dark mode and autosave for files
+
+![](screenshots/dark_mode.png)
+
+## In folder "researches" you can find PDFs describing problems we faced during working on the project 
