@@ -1,7 +1,6 @@
 package com.example.codeeditor;
 
 import android.content.Context;
-import android.view.ContentInfo;
 import android.view.ContextThemeWrapper;
 import android.view.MenuItem;
 import android.view.View;
@@ -34,22 +33,24 @@ public class GitButton {
         return gitButton;
     }
 
+    // ИСПРАВЛЕННАЯ ЧАСТЬ: switch заменен на if-else
     static public boolean onOptionsItemSelected(MenuItem item, MainActivity mainScreen) {
-        switch (item.getItemId()) {
-            case R.id.action_commit:
-                gitCommit();
-                return true;
-            case R.id.action_fetch:
-                gitFetch();
-                return true;
-            case R.id.action_push:
-                gitPush();
-                return true;
-            case R.id.action_clone:
-                gitClone(mainScreen);
-                return true;
-            default:
-                return false;
+        int id = item.getItemId();
+
+        if (id == R.id.action_commit) {
+            gitCommit();
+            return true;
+        } else if (id == R.id.action_fetch) {
+            gitFetch();
+            return true;
+        } else if (id == R.id.action_push) {
+            gitPush();
+            return true;
+        } else if (id == R.id.action_clone) {
+            gitClone(mainScreen);
+            return true;
+        } else {
+            return false;
         }
     }
 
