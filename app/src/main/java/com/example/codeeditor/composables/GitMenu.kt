@@ -2,18 +2,23 @@ package com.example.codeeditor.composables
 
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -21,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -28,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.codeeditor.activities.MainActivity
 import com.example.codeeditor.constants.ButtonRowPadding
@@ -55,12 +62,17 @@ fun GitMenu(
     var showCommitDialog by remember { mutableStateOf(false) }
     var showPushDialog by remember { mutableStateOf(false) }
     var showAddRemoteDialog by remember { mutableStateOf(false) }
+    var showAddFilesDialog by remember { mutableStateOf(false) }
     
     var commitMessage by remember { mutableStateOf("") }
     var pushUsername by remember { mutableStateOf("") }
     var pushPassword by remember { mutableStateOf("") }
     var remoteName by remember { mutableStateOf("origin") }
     var remoteUrl by remember { mutableStateOf("") }
+    
+    // File selection state
+    var availableFiles by remember { mutableStateOf<List<String>>(emptyList()) }
+    val selectedFiles = remember { mutableStateListOf<String>() }
 
     // Helper function to run git operations on background thread
     fun runGitOperation(operation: () -> String) {
@@ -223,6 +235,131 @@ fun GitMenu(
         )
     }
 
+    // Add Files Dialog (with checkboxes)
+    if (showAddFilesDialog) {
+        AlertDialog(
+            onDismissRequest = { if (!isLoading) showAddFilesDialog = false },
+            title = { Text("Select Files to Add") },
+            text = {
+                Column {
+                    if (isLoading) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    } else if (availableFiles.isEmpty()) {
+                        Text(
+                            "No files to add. Working tree is clean.",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    } else {
+                        Text(
+                            "${availableFiles.size} file(s) available",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        // Select All / Deselect All
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            TextButton(onClick = { 
+                                selectedFiles.clear()
+                                selectedFiles.addAll(availableFiles) 
+                            }) {
+                                Text("Select All")
+                            }
+                            TextButton(onClick = { selectedFiles.clear() }) {
+                                Text("Deselect All")
+                            }
+                        }
+                        
+                        // File list with checkboxes
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 300.dp)
+                        ) {
+                            items(availableFiles) { file ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            if (selectedFiles.contains(file)) {
+                                                selectedFiles.remove(file)
+                                            } else {
+                                                selectedFiles.add(file)
+                                            }
+                                        }
+                                        .padding(vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Checkbox(
+                                        checked = selectedFiles.contains(file),
+                                        onCheckedChange = { checked ->
+                                            if (checked) {
+                                                selectedFiles.add(file)
+                                            } else {
+                                                selectedFiles.remove(file)
+                                            }
+                                        }
+                                    )
+                                    Text(
+                                        text = file,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val currentDir = directoryVM.currentEntry.value
+                        scope.launch {
+                            isLoading = true
+                            val result = withContext(Dispatchers.IO) {
+                                FileLogic.gitAddFiles(
+                                    mainActivity,
+                                    currentDir?.uri(),
+                                    selectedFiles.toList()
+                                )
+                            }
+                            isLoading = false
+                            Toast.makeText(mainActivity, result, Toast.LENGTH_LONG).show()
+                            if (result.contains("Added")) {
+                                selectedFiles.clear()
+                                showAddFilesDialog = false
+                            }
+                        }
+                    },
+                    enabled = !isLoading && selectedFiles.isNotEmpty()
+                ) {
+                    Text("Add ${selectedFiles.size} file(s)")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { 
+                        showAddFilesDialog = false
+                        selectedFiles.clear()
+                    },
+                    enabled = !isLoading
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     // Add Remote Dialog
     if (showAddRemoteDialog) {
         AlertDialog(
@@ -371,10 +508,9 @@ fun GitMenu(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Git Add Current File
+            // Git Add Files (with selection dialog)
             Button(
                 onClick = {
-                    val currentFile = fileVM.fileUri.value
                     val currentDir = directoryVM.currentEntry.value
                     if (currentDir == null) {
                         Toast.makeText(
@@ -382,26 +518,24 @@ fun GitMenu(
                             "Open a folder first",
                             Toast.LENGTH_SHORT
                         ).show()
-                    } else if (currentFile == null || currentFile == Uri.EMPTY) {
-                        Toast.makeText(
-                            mainActivity,
-                            LanguageMap[currentLanguage]!!.noFileOpenErrorText,
-                            Toast.LENGTH_SHORT
-                        ).show()
                     } else {
-                        runGitOperation {
-                            FileLogic.gitAdd(
-                                mainActivity,
-                                currentDir.uri(),
-                                currentFile
-                            )
+                        // Load available files and show dialog
+                        scope.launch {
+                            isLoading = true
+                            val files = withContext(Dispatchers.IO) {
+                                FileLogic.getUnstagedFiles(mainActivity, currentDir.uri())
+                            }
+                            availableFiles = files
+                            selectedFiles.clear()
+                            isLoading = false
+                            showAddFilesDialog = true
                         }
                     }
                 },
                 modifier = Modifier.weight(1f),
                 enabled = !isLoading
             ) {
-                Text("Add File")
+                Text("Add Files")
             }
 
             // Git Add All

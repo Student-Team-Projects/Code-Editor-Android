@@ -11,32 +11,17 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import androidx.documentfile.provider.DocumentFile
 import com.example.codeeditor.composables.MainScreen
 import com.example.codeeditor.constants.*
+import com.example.codeeditor.model.FileLogic
 import com.example.codeeditor.ui.theme.CodeEditorTheme
 import com.example.codeeditor.viewmodels.CodeVM
 import com.example.codeeditor.viewmodels.DirectoryEntry
@@ -50,13 +35,23 @@ import kotlin.system.exitProcess
 import android.provider.Settings
 import androidx.core.app.ActivityCompat
 import android.Manifest
-
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 class MainActivity : ComponentActivity() {
 
     var showGitMenu by mutableStateOf(false)
     var currentLanguage by mutableStateOf("English")
+    
+    // Git dialog states
+    var showCommitDialog by mutableStateOf(false)
+    var showPushDialog by mutableStateOf(false)
+    var showAddRemoteDialog by mutableStateOf(false)
+    var showAddFilesDialog by mutableStateOf(false)
+    var availableGitFiles by mutableStateOf<List<String>>(emptyList())
 
     private fun requestStoragePermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -211,5 +206,143 @@ class MainActivity : ComponentActivity() {
     private fun exitApp() {
         finishAndRemoveTask()
         exitProcess(-1)
+    }
+    
+    // Git functions
+    fun gitInit() {
+        val currentDir = directoryVM.currentEntry.value
+        if (currentDir == null) {
+            Toast.makeText(this, LanguageMap[currentLanguage]!!.gitInitializeErrorText, Toast.LENGTH_SHORT).show()
+            return
+        }
+        CoroutineScope(Dispatchers.Main).launch {
+            val result = withContext(Dispatchers.IO) {
+                FileLogic.initGitRepository(this@MainActivity, currentDir.uri())
+            }
+            Toast.makeText(this@MainActivity, result, Toast.LENGTH_LONG).show()
+            directoryVM.update()
+        }
+    }
+    
+    fun gitStatus() {
+        val currentDir = directoryVM.currentEntry.value
+        if (currentDir == null) {
+            Toast.makeText(this, "Open a folder first", Toast.LENGTH_SHORT).show()
+            return
+        }
+        CoroutineScope(Dispatchers.Main).launch {
+            val result = withContext(Dispatchers.IO) {
+                FileLogic.gitStatus(this@MainActivity, currentDir.uri())
+            }
+            Toast.makeText(this@MainActivity, result, Toast.LENGTH_LONG).show()
+        }
+    }
+    
+    fun gitAddFiles() {
+        val currentDir = directoryVM.currentEntry.value
+        if (currentDir == null) {
+            Toast.makeText(this, "Open a folder first", Toast.LENGTH_SHORT).show()
+            return
+        }
+        CoroutineScope(Dispatchers.Main).launch {
+            val files = withContext(Dispatchers.IO) {
+                FileLogic.getUnstagedFiles(this@MainActivity, currentDir.uri())
+            }
+            availableGitFiles = files
+            showAddFilesDialog = true
+        }
+    }
+    
+    fun gitAddAll() {
+        val currentDir = directoryVM.currentEntry.value
+        if (currentDir == null) {
+            Toast.makeText(this, "Open a folder first", Toast.LENGTH_SHORT).show()
+            return
+        }
+        CoroutineScope(Dispatchers.Main).launch {
+            val result = withContext(Dispatchers.IO) {
+                FileLogic.gitAddAll(this@MainActivity, currentDir.uri())
+            }
+            Toast.makeText(this@MainActivity, result, Toast.LENGTH_LONG).show()
+        }
+    }
+    
+    fun gitCommit() {
+        val currentDir = directoryVM.currentEntry.value
+        if (currentDir == null) {
+            Toast.makeText(this, "Open a folder first", Toast.LENGTH_SHORT).show()
+            return
+        }
+        showCommitDialog = true
+    }
+    
+    fun gitPush() {
+        val currentDir = directoryVM.currentEntry.value
+        if (currentDir == null) {
+            Toast.makeText(this, "Open a folder first", Toast.LENGTH_SHORT).show()
+            return
+        }
+        showPushDialog = true
+    }
+    
+    fun gitAddRemote() {
+        val currentDir = directoryVM.currentEntry.value
+        if (currentDir == null) {
+            Toast.makeText(this, "Open a folder first", Toast.LENGTH_SHORT).show()
+            return
+        }
+        showAddRemoteDialog = true
+    }
+    
+    fun performGitCommit(message: String) {
+        val currentDir = directoryVM.currentEntry.value ?: return
+        CoroutineScope(Dispatchers.Main).launch {
+            val result = withContext(Dispatchers.IO) {
+                FileLogic.gitCommit(this@MainActivity, currentDir.uri(), message)
+            }
+            Toast.makeText(this@MainActivity, result, Toast.LENGTH_LONG).show()
+            if (result.startsWith("Committed:")) {
+                showCommitDialog = false
+            }
+        }
+    }
+    
+    fun performGitPush(username: String?, password: String?) {
+        val currentDir = directoryVM.currentEntry.value ?: return
+        CoroutineScope(Dispatchers.Main).launch {
+            val result = withContext(Dispatchers.IO) {
+                FileLogic.gitPush(this@MainActivity, currentDir.uri(), username, password)
+            }
+            Toast.makeText(this@MainActivity, result, Toast.LENGTH_LONG).show()
+            if (result.startsWith("Push successful")) {
+                showPushDialog = false
+            }
+        }
+    }
+    
+    fun performGitAddRemote(name: String, url: String) {
+        val currentDir = directoryVM.currentEntry.value ?: return
+        CoroutineScope(Dispatchers.Main).launch {
+            val result = withContext(Dispatchers.IO) {
+                FileLogic.gitAddRemote(this@MainActivity, currentDir.uri(), name, url)
+            }
+            Toast.makeText(this@MainActivity, result, Toast.LENGTH_LONG).show()
+            if (result.contains("added")) {
+                showAddRemoteDialog = false
+            }
+        }
+    }
+    
+    fun performGitAddFiles(files: List<String>) {
+        val currentDir = directoryVM.currentEntry.value ?: return
+        CoroutineScope(Dispatchers.Main).launch {
+            val result = withContext(Dispatchers.IO) {
+                FileLogic.gitAddFiles(this@MainActivity, currentDir.uri(), files)
+            }
+            Toast.makeText(this@MainActivity, result, Toast.LENGTH_LONG).show()
+            if (result.contains("Added")) {
+                showAddFilesDialog = false
+            }
+        }
     }
 }

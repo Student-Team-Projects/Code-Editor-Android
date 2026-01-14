@@ -371,6 +371,91 @@ public class FileLogic {
     }
 
     /**
+     * Get list of files that can be staged (modified, untracked, deleted).
+     * Returns a list of file paths relative to the repository root.
+     */
+    public static java.util.List<String> getUnstagedFiles(Context context, Uri directoryUri) {
+        java.util.List<String> files = new java.util.ArrayList<>();
+        try {
+            if (directoryUri == null) {
+                return files;
+            }
+            
+            File repoDir = getFileFromUri(context, directoryUri);
+            if (repoDir == null) {
+                return files;
+            }
+
+            File gitRoot = findGitRoot(repoDir);
+            if (gitRoot == null) {
+                return files;
+            }
+
+            Git git = Git.open(gitRoot);
+            Status status = git.status().call();
+
+            // Add untracked files
+            files.addAll(status.getUntracked());
+            // Add modified files
+            files.addAll(status.getModified());
+            // Add deleted files (marked with prefix for UI)
+            for (String deleted : status.getMissing()) {
+                files.add(deleted);
+            }
+
+            git.close();
+            
+            // Sort alphabetically
+            java.util.Collections.sort(files);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return files;
+    }
+
+    /**
+     * Add specific files to the Git staging area by their relative paths.
+     */
+    public static String gitAddFiles(Context context, Uri directoryUri, java.util.List<String> filePaths) {
+        try {
+            if (directoryUri == null) {
+                return "No directory selected.";
+            }
+            
+            if (filePaths == null || filePaths.isEmpty()) {
+                return "No files selected.";
+            }
+            
+            File repoDir = getFileFromUri(context, directoryUri);
+            if (repoDir == null) {
+                return "Could not resolve repository path.";
+            }
+            
+            File gitRoot = findGitRoot(repoDir);
+            if (gitRoot == null) {
+                return "Not a Git repository.";
+            }
+
+            Git git = Git.open(gitRoot);
+
+            for (String filePath : filePaths) {
+                git.add()
+                        .addFilepattern(filePath)
+                        .call();
+            }
+
+            git.close();
+            return "Added " + filePaths.size() + " file(s) to staging.";
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            String msg = e.getMessage();
+            return "Git add error: " + (msg != null ? msg : e.getClass().getSimpleName());
+        }
+    }
+
+    /**
      * Add a remote repository URL.
      */
     public static String gitAddRemote(Context context, Uri directoryUri, String remoteName, String remoteUrl) {
