@@ -117,7 +117,7 @@ fun MainScreen(
                     .fillMaxHeight()
                     .weight(directoryTreeWidthFraction)
             ) {
-                    DirectoryTreeMenu(openDirectory, currentColorMode, currentLanguage, directoryVM) { d ->
+                    DirectoryTreeMenu(currentColorMode, currentLanguage, directoryVM) { d ->
                     if (autosaveState) save.invoke()
                     onEntryClicked.invoke(d)
                 }
@@ -167,6 +167,7 @@ fun MainScreen(
                     open = openFile,
                     save = save,
                     saveAs = { saveAs.invoke() },
+                    openDirectory = openDirectory,
                     updateAutosaveState = { autosaveState = !autosaveState },
                     exitApp = {
                         if (autosaveState) save.invoke()
@@ -203,7 +204,7 @@ fun MainScreen(
 
 @Composable
 fun ScreenLayout(codeVM: CodeVM, currentColorGroup: String, currentLanguage:String, open: () -> Unit, save:() -> Unit, saveAs: () -> Unit,
-                 updateAutosaveState: () -> Unit, exitApp: () -> Unit, createFile: () -> Unit,
+                 openDirectory: () -> Unit, updateAutosaveState: () -> Unit, exitApp: () -> Unit, createFile: () -> Unit,
                  mainActivity: MainActivity, defaultAutosave: Boolean, textColor: Color,
                  modeChange: () -> Unit) {
     Column(
@@ -223,8 +224,8 @@ fun ScreenLayout(codeVM: CodeVM, currentColorGroup: String, currentLanguage:Stri
         
         // Bottom toolbar with hamburger menu
         ButtonRow(
-            codeVM, currentColorGroup, currentLanguage, open, save, saveAs, 
-            updateAutosaveState, exitApp, createFile, mainActivity, 
+            codeVM, currentColorGroup, currentLanguage, open, save, saveAs,
+            openDirectory, updateAutosaveState, exitApp, createFile, mainActivity, 
             defaultAutosave, textColor, modeChange
         )
     }
@@ -489,7 +490,7 @@ fun CodeAreaOnly(
  */
 @Composable
 fun ButtonRow(codeVM: CodeVM, currentColorMode: String, currentLanguage: String, open: ()->Unit, save:() -> Unit,
-              saveAs: () -> Unit,
+              saveAs: () -> Unit, openDirectory: () -> Unit,
               updateAutosaveState: ()->Unit, exitApp: () -> Unit, createFile: () -> Unit,
               mainActivity: MainActivity, defaultAutosave: Boolean, textColor: Color,
               modeChange: () -> Unit) {
@@ -543,6 +544,13 @@ fun ButtonRow(codeVM: CodeVM, currentColorMode: String, currentLanguage: String,
                     onClick = { 
                         showMainMenu = false
                         open()
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(LanguageMap[currentLanguage]!!.openDirectoryText) },
+                    onClick = { 
+                        showMainMenu = false
+                        openDirectory()
                     }
                 )
                 DropdownMenuItem(
