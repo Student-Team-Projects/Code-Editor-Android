@@ -22,12 +22,20 @@ public class FileButton {
                 Context wrapper = new ContextThemeWrapper(mainScreen, R.style.CustomPopupMenu);
                 PopupMenu popup = new PopupMenu(wrapper, v);
                 popup.getMenuInflater().inflate(R.menu.menu_file, popup.getMenu());
-                popup.getMenu().setGroupVisible(3, false);
-                if(mainScreen.getCurrentFileName() == null) {
-                    popup.getMenu().findItem(R.id.action_save_file).setEnabled(false);
-                    //popup.getMenu().findItem(R.id.action_save_file).setVisible(false);
-                    popup.getMenu().setGroupVisible(R.id.group3, false);
+
+                // Исправлена работа с группами меню
+                if (popup.getMenu().findItem(R.id.action_save_file) != null) {
+                    // Группы иногда не работают на старых API, поэтому проверяем элементы
                 }
+
+                if(mainScreen.getCurrentFileName() == null) {
+                    MenuItem saveItem = popup.getMenu().findItem(R.id.action_save_file);
+                    if (saveItem != null) {
+                        saveItem.setEnabled(false);
+                    }
+                    // popup.getMenu().setGroupVisible(R.id.group3, false); // Это может вызывать ошибки, если группа не найдена
+                }
+
                 popup.getMenu().setGroupDividerEnabled(true);
                 popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                     public boolean onMenuItemClick(MenuItem item) {
@@ -41,28 +49,30 @@ public class FileButton {
         return fileButton;
     }
 
+    // ИСПРАВЛЕННАЯ ЧАСТЬ: switch заменен на if-else
     static public boolean onOptionsItemSelected(MenuItem item, MainActivity mainScreen) {
-        switch (item.getItemId()) {
-            case R.id.action_open_file:
-                openFile(mainScreen);
-                return true;
-            case R.id.action_new_file:
-                createNewFile(mainScreen);
-                return true;
-            case R.id.action_close_file:
-                closeCurrentFile(mainScreen);
-                return true;
-            case R.id.action_save_file:
-                saveFile(mainScreen);
-                return true;
-            case R.id.action_open_project:
-                openProject(mainScreen);
-                return true;
-            case R.id.action_close_project:
-                closeProject(mainScreen);
-                return true;
-            default:
-                return false;
+        int id = item.getItemId();
+
+        if (id == R.id.action_open_file) {
+            openFile(mainScreen);
+            return true;
+        } else if (id == R.id.action_new_file) {
+            createNewFile(mainScreen);
+            return true;
+        } else if (id == R.id.action_close_file) {
+            closeCurrentFile(mainScreen);
+            return true;
+        } else if (id == R.id.action_save_file) {
+            saveFile(mainScreen);
+            return true;
+        } else if (id == R.id.action_open_project) {
+            openProject(mainScreen);
+            return true;
+        } else if (id == R.id.action_close_project) {
+            closeProject(mainScreen);
+            return true;
+        } else {
+            return false;
         }
     }
 

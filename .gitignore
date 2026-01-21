@@ -1,44 +1,66 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.buildlog/
-.history
-.svn/
-migrate_working_dir/
+# Secrets
+*_secret.txt
+*.keystore
+*.jks
 
-# IntelliJ related
+# Compiled files
+*.class
+*.dex
+*.apk
+*.ap_
+*.aab
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+.DS_Store?
+Thumbs.db
+
+# IntelliJ / Android Studio
 *.iml
 *.ipr
 *.iws
 .idea/
+.idea_modules/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# VS Code
+.vscode/
 
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.packages
-.pub-cache/
-.pub/
-/build/
+# Gradle
+.gradle/
+build/
+**/build/
+!gradle/wrapper/gradle-wrapper.jar
 
-# Symbolication related
-app.*.symbols
+# Local configuration (contains SDK path, user-specific settings)
+local.properties
+*.local
+gradle.properties
 
-# Obfuscation related
-app.*.map.json
+# Proguard
+proguard/
 
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+# NDK
+obj/
+.cxx/
+
+# Native libs (generated)
+libs/armeabi/
+libs/armeabi-v7a/
+libs/arm64-v8a/
+libs/x86/
+libs/x86_64/
+
+# Test outputs
+/captures
+
+# Misc
+*.swp
+*.bak
+*.tmp
+*.temp
+
+# Cursor
+.cursor/
