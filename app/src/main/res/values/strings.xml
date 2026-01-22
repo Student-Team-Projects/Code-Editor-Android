@@ -1,3 +1,15 @@
 <resources>
-    <string name="app_name">CodeEditor</string>
+    <string name="app_name">Code Editor</string>
+
+    <string name="back">Back</string>
+    <string name="new_folder">New Folder</string>
+    <string name="new_file">New File</string>
+    <string name="device">Device</string>
+    <string name="exit">Exit</string>
+    <string name="file">File</string>
+    <string name="git">Git</string>
+    <string name="file_explorer">File Explorer</string>
+    <string name="open_hint">Open file...</string>
+    <string name="save">Save</string>
+    <string name="settings">Settings</string>
 </resources>
