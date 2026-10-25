@@ -16,7 +16,6 @@ public class FileButton {
         Button fileButton = mainScreen.findViewById(R.id.file_button);
 
         fileButton.setOnClickListener(new View.OnClickListener() {
-            @RequiresApi(api = Build.VERSION_CODES.P)
             @Override
             public void onClick(View v) {
                 Context wrapper = new ContextThemeWrapper(mainScreen, R.style.CustomPopupMenu);
@@ -107,8 +106,9 @@ public class FileButton {
 
     static private void saveFile(MainActivity mainScreen){
         String fileName = mainScreen.getCurrentFileName();
-        String content = CodeEditorController.getCode(mainScreen);
-        FilesController.saveFile(fileName, content, mainScreen);
+        CodeEditorController.getCode(mainScreen, content -> {
+            FilesController.saveFile(fileName, content, mainScreen);
+        });
     }
 
     static private void openProject(MainActivity mainScreen) {

@@ -152,6 +152,6 @@ public val ButtonTextFieldSpacing = 0.dp
 public val BorderThickness = 1.dp
 public val CornerRadius = 8.dp
 public const val DirectoryTreePaddingIncrement = 8
-public val searchingExtensions = arrayOf("text/plain", "text/x-c", "text/x-java-source", "text/x-python")
+public val searchingExtensions = arrayOf("*/*")
 public const val saveAsDefaultExtension = "*/*"
 public const val epsilon = 10e-6f

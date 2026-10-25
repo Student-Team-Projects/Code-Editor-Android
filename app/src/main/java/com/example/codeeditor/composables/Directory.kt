@@ -61,7 +61,7 @@ fun DirectoryTree(
     padding: Int = 0,
     isRoot: Boolean = false
 ) {
-    val isDirectory = !entry.isFile()
+    val isDirectory = entry.isDirectory()
     
     // State for folder expansion - root folder expanded by default
     var isExpanded by remember { mutableStateOf(isRoot) }

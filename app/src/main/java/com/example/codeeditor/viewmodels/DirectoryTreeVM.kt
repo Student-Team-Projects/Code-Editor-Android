@@ -15,7 +15,11 @@ class DirectoryEntry(private val df: DocumentFile) {
     }
 
     fun isFile(): Boolean {
-        return df.isFile
+        return !df.isDirectory
+    }
+
+    fun isDirectory(): Boolean {
+        return df.isDirectory
     }
 
     fun uri(): Uri {

@@ -3,6 +3,7 @@ package com.example.codeeditor;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -21,7 +22,6 @@ import android.widget.Button;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.widget.Toast;
-import com.amrdeveloper.codeview.CodeView;
 
 import java.io.File;
 import java.util.HashMap;
@@ -46,8 +46,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Button fileButton;
     private Button gitButton;
-    private CodeView codeView;
-    private EditText openFileHint;
+    private WebView codeView;
     private HashMap<Object, Boolean> canBeEnabled;
     private View openFileTextInput;
     private String currentFileName;
@@ -61,10 +60,8 @@ public class MainActivity extends AppCompatActivity {
 
         fileButton = FileButton.getFileButton(this);
         gitButton = GitButton.getGitButton(this);
-        codeView = CodeEditorController.getCodeEditor(this);
+        codeView = CodeEditorController.setupCodeEditor(this);
 
-        openFileHint = this.findViewById(R.id.openFileHint);
-        openFileHint.setEnabled(false);
         CodeEditorController.DisableCodeEditor(this);
 
         NewFileController.setDisabled(this);
@@ -91,13 +88,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    protected void disableOpenFileHint() {
-        openFileHint.setVisibility(View.INVISIBLE);
-    }
 
-    protected void enableOpenFileHint() {
-        openFileHint.setVisibility(View.VISIBLE);
-    }
 
     protected void disableMainLayout(){
         canBeEnabled = new HashMap<>();
@@ -171,21 +162,18 @@ public class MainActivity extends AppCompatActivity {
         //     }
         // });
     protected boolean getEditorEnabled(){
-        return !(openFileHint.getVisibility() == View.VISIBLE);
+        return currentFileName != null;
     }
 
     public void setCurrentFileName(String fileName) throws Exception{
         if(fileName == null){
             currentFileName = null;
-            enableOpenFileHint();
-            CodeEditorController.setCode("", this);
             CodeEditorController.DisableCodeEditor(this);
             return;
         }
         currentFileName = fileName;
-        disableOpenFileHint();
-        CodeEditorController.setCode(FilesController.getFilesInside(fileName, this), this);
         CodeEditorController.EnableCodeEditor(this);
+        CodeEditorController.setCode(FilesController.getFilesInside(fileName, this), this);
     }
 
     public void setCurrentProjectPath(String projectPath) throws Exception{
