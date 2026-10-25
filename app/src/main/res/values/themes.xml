@@ -1,5 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.CodeEditor" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.CodeEditor" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/purple_1</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/purple_2</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <!-- Tertiary brand color. -->
+        <item name="colorTertiary">@color/purple_3</item>
+        <item name="colorOnTertiary">@color/white</item>
+
+        <!-- Surface & Background -->
+        <item name="android:colorBackground">@color/purple_5</item>
+        <item name="colorSurface">@color/purple_5</item>
+        <item name="colorOnSurface">@color/purple_0</item>
+
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">@color/purple_1</item>
+    </style>
 </resources>

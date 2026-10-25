@@ -92,7 +92,7 @@ fun MainScreen(
     mainActivity: MainActivity
 ) {
     var directoryTreeWidthFraction by remember { mutableFloatStateOf(0.3f) }
-    var currentColorMode by remember { mutableStateOf("Normal") }
+    var currentColorMode by remember { mutableStateOf("Dark") }
     var autosaveState = true
     
     // Git dialogs

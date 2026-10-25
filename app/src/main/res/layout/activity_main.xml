@@ -4,176 +4,156 @@
     android:id="@+id/mainLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/dark_gray">
+    android:background="?attr/colorSurface">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/subMainLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/dark_gray"
+        android:background="?attr/colorSurface"
         android:gravity="center">
-    <LinearLayout
-        android:id="@+id/upperPanelLayout"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:background="@drawable/upper_panel_background"
-        android:gravity="center_vertical"
-        tools:ignore="MissingConstraints"
-        tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="0dp">
 
-    <!-- <Button
-        android:id="@+id/open_file_button"
-        android:text="Open File"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"/> -->
-        <ImageView
-            android:id="@+id/imageView2"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            app:srcCompat="@drawable/ic_action_name" />
-
-        <Button
-            android:id="@+id/file_button"
-            style="?android:attr/borderlessButtonStyle"
-            android:layout_width="65dp"
-            android:layout_height="50dp"
-            android:background="@drawable/button_selector"
-            android:fontFamily="@font/uncutsans_bold"
-            android:paddingHorizontal="0dp"
-            android:text="@string/file"
-            android:textAllCaps="false"
-            android:textSize="16sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/git_button"
-            app:layout_constraintHorizontal_bias="1.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.0"
-            tools:visibility="visible" />
-
-    <!-- <Button
-        android:id="@+id/file_explorer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:text="file explorer" />
-
-    <Button
-        android:id="@+id/openInternalStorageButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Open Internal Storage" />
-
-</LinearLayout> -->
-        <Button
-            android:id="@+id/git_button"
-            style="?android:attr/borderlessButtonStyle"
-            android:layout_width="55dp"
-            android:layout_height="50dp"
-            android:background="@drawable/button_selector"
-            android:fontFamily="@font/uncutsans_bold"
-            android:paddingLeft="5dp"
-            android:paddingRight="5dp"
-            android:text="@string/git"
-            android:textAllCaps="false"
-            android:textSize="16sp"
+        <LinearLayout
+            android:id="@+id/upperPanelLayout"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:background="@drawable/upper_panel_background"
+            android:gravity="center_vertical"
             tools:ignore="MissingConstraints"
-            tools:layout_editor_absoluteX="125dp"
-            tools:layout_editor_absoluteY="0dp"
-            tools:visibility="visible" />
+            tools:layout_editor_absoluteX="0dp"
+            tools:layout_editor_absoluteY="0dp">
 
-        <Button
-            android:id="@+id/file_explorer"
-            style="?android:attr/borderlessButtonStyle"
-            android:layout_width="75dp"
-            android:layout_height="50dp"
-            android:background="@drawable/button_selector"
-            android:fontFamily="@font/uncutsans_bold"
-            android:paddingLeft="5dp"
-            android:paddingRight="5dp"
-            android:text="@string/file_explorer"
-            android:textAllCaps="false"
-            android:textSize="12sp"
-            tools:ignore="MissingConstraints"
-            tools:layout_editor_absoluteX="125dp"
-            tools:layout_editor_absoluteY="0dp"
-            tools:visibility="visible" />
+            <ImageView
+                android:id="@+id/imageView2"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                app:srcCompat="@drawable/ic_action_name" />
 
-    </LinearLayout>
+            <Button
+                android:id="@+id/file_button"
+                style="?android:attr/borderlessButtonStyle"
+                android:layout_width="65dp"
+                android:layout_height="50dp"
+                android:background="@drawable/button_selector"
+                android:fontFamily="@font/uncutsans_bold"
+                android:paddingHorizontal="0dp"
+                android:text="@string/file"
+                android:textAllCaps="false"
+                android:textColor="?attr/colorOnPrimary"
+                android:textSize="16sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/git_button"
+                app:layout_constraintHorizontal_bias="1.0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0.0"
+                tools:visibility="visible" />
 
-    <FrameLayout
-        android:id="@+id/CodeTextLayout"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginStart="356dp"
-        android:layout_marginTop="53dp"
-        android:background="@drawable/code_text_panel_background"
-        tools:ignore="MissingConstraints">
+            <Button
+                android:id="@+id/git_button"
+                style="?android:attr/borderlessButtonStyle"
+                android:layout_width="55dp"
+                android:layout_height="50dp"
+                android:background="@drawable/button_selector"
+                android:fontFamily="@font/uncutsans_bold"
+                android:paddingLeft="5dp"
+                android:paddingRight="5dp"
+                android:text="@string/git"
+                android:textAllCaps="false"
+                android:textColor="?attr/colorOnPrimary"
+                android:textSize="16sp"
+                tools:ignore="MissingConstraints"
+                tools:layout_editor_absoluteX="125dp"
+                tools:layout_editor_absoluteY="0dp"
+                tools:visibility="visible" />
 
-        <EditText
-            android:id="@+id/openFileHint"
+            <Button
+                android:id="@+id/file_explorer"
+                style="?android:attr/borderlessButtonStyle"
+                android:layout_width="75dp"
+                android:layout_height="50dp"
+                android:background="@drawable/button_selector"
+                android:fontFamily="@font/uncutsans_bold"
+                android:paddingLeft="5dp"
+                android:paddingRight="5dp"
+                android:text="@string/file_explorer"
+                android:textAllCaps="false"
+                android:textColor="?attr/colorOnPrimary"
+                android:textSize="12sp"
+                tools:ignore="MissingConstraints"
+                tools:layout_editor_absoluteX="125dp"
+                tools:layout_editor_absoluteY="0dp"
+                tools:visibility="visible" />
+
+        </LinearLayout>
+
+        <FrameLayout
+            android:id="@+id/CodeTextLayout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:ems="10"
-            android:inputType="text"
-            android:fontFamily="@font/uncutsans_regularitalic"
-            android:text="@string/open_hint"
-            android:gravity="center"
-            android:textColor="@color/white" />
+            android:layout_marginStart="356dp"
+            android:layout_marginTop="53dp"
+            android:background="@drawable/code_text_panel_background"
+            tools:ignore="MissingConstraints">
 
-        <com.amrdeveloper.codeview.CodeView
-            android:id="@+id/codeView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@color/transparent"
-            android:layout_marginTop="50dp"
-            android:layout_marginStart="10dp"
-            android:dropDownWidth="150dp"
-            android:textColor="@color/white"
-            android:dropDownHorizontalOffset="0dp"
-            android:dropDownSelector="@color/dark_gray"
-            android:gravity="top|start">
-        </com.amrdeveloper.codeview.CodeView>
-
-
-    </FrameLayout>
-
-
-    <LinearLayout
-        android:id="@+id/ExplorerLayout"
-        android:layout_width="300dp"
-        android:layout_height="match_parent"
-        android:background="@drawable/explorer_panel_background"
-        android:gravity="center"
-        android:orientation="horizontal"
-        android:layout_marginTop="53dp"
-        app:layout_constraintEnd_toStartOf="@+id/CodeTextLayout"
-        tools:ignore="MissingConstraints">
-
-        <ScrollView
-            android:id="@+id/ExplorerScroll"
-            android:layout_width="250dp"
-            android:layout_height="match_parent"
-            android:background="@drawable/transperent"
-            >
-
-            <LinearLayout
-                android:id="@+id/ExplorerScrollLayout"
+            <EditText
+                android:id="@+id/openFileHint"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:gravity="left|top"
-                android:background="@color/transparent">
-            </LinearLayout>
-        </ScrollView>
+                android:ems="10"
+                android:inputType="text"
+                android:fontFamily="@font/uncutsans_regularitalic"
+                android:text="@string/open_hint"
+                android:gravity="center"
+                android:textColor="?attr/colorOnSurface" />
 
-    </LinearLayout>
+            <com.amrdeveloper.codeview.CodeView
+                android:id="@+id/codeView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/transparent"
+                android:layout_marginTop="50dp"
+                android:layout_marginStart="10dp"
+                android:dropDownWidth="150dp"
+                android:textColor="?attr/colorOnSurface"
+                android:dropDownHorizontalOffset="0dp"
+                android:dropDownSelector="?attr/colorPrimary"
+                android:gravity="top|start">
+            </com.amrdeveloper.codeview.CodeView>
 
+        </FrameLayout>
+
+        <LinearLayout
+            android:id="@+id/ExplorerLayout"
+            android:layout_width="300dp"
+            android:layout_height="match_parent"
+            android:background="@drawable/explorer_panel_background"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:layout_marginTop="53dp"
+            app:layout_constraintEnd_toStartOf="@+id/CodeTextLayout"
+            tools:ignore="MissingConstraints">
+
+            <ScrollView
+                android:id="@+id/ExplorerScroll"
+                android:layout_width="250dp"
+                android:layout_height="match_parent"
+                android:background="@drawable/transperent"
+                >
+
+                <LinearLayout
+                    android:id="@+id/ExplorerScrollLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:gravity="left|top"
+                    android:background="@color/transparent">
+                </LinearLayout>
+            </ScrollView>
+
+        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-
 
     <FrameLayout
         android:id="@+id/NewFileLayout"
@@ -191,7 +171,7 @@
             android:layout_height="30dp"
             android:background="@color/transparent"
             android:fontFamily="@font/uncutsans_bold"
-            android:textColor="@color/white"
+            android:textColor="?attr/colorOnPrimary"
             android:gravity="center"
             android:text="New File Creation" />
 
@@ -218,7 +198,7 @@
                 android:layout_width="390dp"
                 android:layout_height="52dp"
                 android:background="@color/transparent"
-                android:textColor="@color/white"
+                android:textColor="?attr/colorOnSurface"
                 />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -239,13 +219,12 @@
             android:layout_height="50dp"
             android:layout_marginStart="350dp"
             android:layout_marginTop="130dp"
-            android:textColor="@color/accept_green"
+            android:textColor="?attr/colorOnPrimary"
             android:text="Create"
             android:background="@drawable/open_button_background">
         </Button>
 
     </FrameLayout>
-
 
     <FrameLayout
         android:id="@+id/OpenFileLayout"
@@ -263,7 +242,7 @@
             android:layout_height="30dp"
             android:background="@color/transparent"
             android:fontFamily="@font/uncutsans_bold"
-            android:textColor="@color/white"
+            android:textColor="?attr/colorOnPrimary"
             android:gravity="center"
             android:text="Open File" />
 
@@ -290,7 +269,7 @@
                 android:layout_width="390dp"
                 android:layout_height="52dp"
                 android:background="@color/transparent"
-                android:textColor="@color/white"
+                android:textColor="?attr/colorOnSurface"
                 />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -329,7 +308,7 @@
             android:layout_height="50dp"
             android:layout_marginStart="350dp"
             android:layout_marginTop="250dp"
-            android:textColor="@color/accept_green"
+            android:textColor="?attr/colorOnPrimary"
             android:text="Open"
             android:background="@drawable/open_button_background">
         </Button>
@@ -352,7 +331,7 @@
             android:layout_height="30dp"
             android:background="@color/transparent"
             android:fontFamily="@font/uncutsans_bold"
-            android:textColor="@color/white"
+            android:textColor="?attr/colorOnPrimary"
             android:gravity="center"
             android:text="Open Project" />
 
@@ -379,7 +358,7 @@
                 android:layout_width="390dp"
                 android:layout_height="52dp"
                 android:background="@color/transparent"
-                android:textColor="@color/white"
+                android:textColor="?attr/colorOnSurface"
                 />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -418,7 +397,7 @@
             android:layout_height="50dp"
             android:layout_marginStart="350dp"
             android:layout_marginTop="250dp"
-            android:textColor="@color/accept_green"
+            android:textColor="?attr/colorOnPrimary"
             android:text="Open"
             android:background="@drawable/open_button_background">
         </Button>
@@ -441,7 +420,7 @@
             android:layout_height="30dp"
             android:background="@color/transparent"
             android:fontFamily="@font/uncutsans_bold"
-            android:textColor="@color/white"
+            android:textColor="?attr/colorOnPrimary"
             android:gravity="center"
             android:text="Clone Git Repository" />
 
@@ -468,7 +447,7 @@
                 android:layout_width="390dp"
                 android:layout_height="52dp"
                 android:background="@color/transparent"
-                android:textColor="@color/white"
+                android:textColor="?attr/colorOnSurface"
                 />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -489,12 +468,11 @@
             android:layout_height="50dp"
             android:layout_marginStart="350dp"
             android:layout_marginTop="130dp"
-            android:textColor="@color/accept_green"
+            android:textColor="?attr/colorOnPrimary"
             android:text="Clone"
             android:background="@drawable/open_button_background">
         </Button>
 
     </FrameLayout>
-
 
 </FrameLayout>

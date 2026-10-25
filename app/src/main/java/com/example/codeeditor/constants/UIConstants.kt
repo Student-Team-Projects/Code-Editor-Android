@@ -3,6 +3,11 @@ package com.example.codeeditor.constants
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.example.codeeditor.ui.theme.Purple0
+import com.example.codeeditor.ui.theme.Purple1
+import com.example.codeeditor.ui.theme.Purple3
+import com.example.codeeditor.ui.theme.Purple4
+import com.example.codeeditor.ui.theme.Purple5
 
 data class ColorGroup(
     val backgroundColor: Color,
@@ -15,20 +20,20 @@ data class ColorGroup(
 
 val ColorGroups = mapOf(
     "Normal" to ColorGroup(
-        backgroundColor = Color.White,
-        codeAreaBackgroundColor = Color(0xFFFFF9C4),
-        borderColor = Color.Gray,
-        buttonColor = Color.Blue,
-        textColor = Color.Black,
-        placeholderTextColor = Color.Gray
+        backgroundColor = Purple5,
+        codeAreaBackgroundColor = Purple5,
+        borderColor = Purple3,
+        buttonColor = Purple1,
+        textColor = Purple0,
+        placeholderTextColor = Purple3
     ),
     "Dark" to ColorGroup(
-        backgroundColor = Color.DarkGray,
-        codeAreaBackgroundColor = Color.Gray,
-        borderColor = Color.Gray,
-        buttonColor = Color(0xFF4B0082),
-        textColor = Color.White,
-        placeholderTextColor = Color.Yellow
+        backgroundColor = Purple0,
+        codeAreaBackgroundColor = Purple0,
+        borderColor = Purple3,
+        buttonColor = Purple1,
+        textColor = Purple5,
+        placeholderTextColor = Purple4
     )
 )
 

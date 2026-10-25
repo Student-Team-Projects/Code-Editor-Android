@@ -27,4 +27,12 @@
     <color name="colorPrimary">#6200EE</color>
     <color name="colorPrimaryDark">#3700B3</color>
     <color name="colorAccent">#03DAC5</color>
+
+    // all them purples go from darkest to lightest
+    <color name="purple_0">#1C052F</color>
+    <color name="purple_1">#8B2ADA</color>
+    <color name="purple_2">#A56CD4</color>
+    <color name="purple_3">#886F9D</color>
+    <color name="purple_4">#C5AADD</color>
+    <color name="purple_5">#DED3E8</color>
 </resources>
