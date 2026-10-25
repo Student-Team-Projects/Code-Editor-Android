@@ -1,5 +1,6 @@
 package com.example.codeeditor.composables
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -37,7 +38,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import com.example.codeeditor.R
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.clickable
@@ -771,13 +774,24 @@ fun ButtonRow(codeVM: CodeVM, currentColorMode: String, currentLanguage: String,
             }
         }
         
-        // Center - Title
-        Text(
-            text = "Code Editor",
-            color = ColorGroups[currentColorMode]!!.textColor,
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.align(Alignment.Center)
-        )
+        // Center - Logo & Title
+        Row(
+            modifier = Modifier.align(Alignment.Center),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.logo),
+                contentDescription = "Logo",
+                modifier = Modifier
+                    .size(28.dp)
+                    .padding(end = 6.dp)
+            )
+            Text(
+                text = "Code Editor",
+                color = ColorGroups[currentColorMode]!!.textColor,
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
         
         // Right side - Quick save
         IconButton(
