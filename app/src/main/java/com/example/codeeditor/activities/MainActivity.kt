@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -91,6 +92,13 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
         uri?.let {
+            try {
+                contentResolver.takePersistableUriPermission(
+                    it,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: Exception) {
+            }
             updateCurrentFile(it)
             readTextFromUri(it)
         }
@@ -100,6 +108,13 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.OpenDocumentTree()
     ) { uri: Uri? ->
         uri?.let {
+            try {
+                contentResolver.takePersistableUriPermission(
+                    it,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: Exception) {
+            }
             updateCurrentDirectory(it)
         }
     }
@@ -169,17 +184,21 @@ class MainActivity : AppCompatActivity() {
 
     fun readTextFromUri(uri: Uri) {
         try {
+            val stringBuilder = StringBuilder()
             contentResolver.openInputStream(uri)?.use { inputStream ->
-                val text = BufferedReader(InputStreamReader(inputStream)).readText()
-                codeVM.updateText(text)
-            } ?: run {
-                Toast.makeText(this, LanguageMap[currentLanguage]!!.failedToOpenFileText,
-                    Toast.LENGTH_SHORT).show()
+                BufferedReader(InputStreamReader(inputStream)).use { reader ->
+                    var line: String? = reader.readLine()
+                    while (line != null) {
+                        stringBuilder.append(line).append("\n")
+                        line = reader.readLine()
+                    }
+                }
             }
-        } catch (e: FileNotFoundException) {
-            Toast.makeText(this, LanguageMap[currentLanguage]!!.fileNotFoundText,
-                Toast.LENGTH_SHORT).show()
-            e.printStackTrace()
+            val text = stringBuilder.toString()
+            codeVM.updateText(text)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Failed to open file: $uri", e)
+            Toast.makeText(this, LanguageMap[currentLanguage]!!.failedToOpenFileText + ": ${e.localizedMessage}", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -191,19 +210,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun saveCodeToFile() {
+        val uri = fileVM.fileUri.value
+        if (uri == Uri.EMPTY) return
         try {
-            contentResolver.openOutputStream(fileVM.fileUri.value)?.use { outputStream ->
+            contentResolver.openOutputStream(uri, "wt")?.use { outputStream ->
                 OutputStreamWriter(outputStream).use { writer ->
                     writer.write(codeVM.text.value)
                 }
-            } ?: run {
-                Toast.makeText(this, LanguageMap[currentLanguage]!!.failedToSaveFileText,
-                    Toast.LENGTH_SHORT).show()
             }
-        } catch (e: FileNotFoundException) {
-            Toast.makeText(this, LanguageMap[currentLanguage]!!.fileNotFoundText,
-                Toast.LENGTH_SHORT).show()
-            e.printStackTrace()
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Failed to save file: $uri", e)
+            Toast.makeText(this, LanguageMap[currentLanguage]!!.failedToSaveFileText + ": ${e.localizedMessage}", Toast.LENGTH_LONG).show()
         }
     }
 

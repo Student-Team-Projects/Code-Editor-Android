@@ -155,10 +155,13 @@ fun MainScreen(
                     .fillMaxHeight()
                     .weight(1f - directoryTreeWidthFraction)
             ) {
+                    val fileUri = mainActivity.fileVM.fileUri.value
+                    val ext = fileUri.lastPathSegment?.substringAfterLast('.', "") ?: ""
                     CodeAreaOnly(
-                    codeVM = codeVM,
-                    currentColorGroup = currentColorMode,
-                        currentLanguage = currentLanguage
+                        codeVM = codeVM,
+                        currentColorGroup = currentColorMode,
+                        currentLanguage = currentLanguage,
+                        fileExtension = ext
                     )
                 }
             }
@@ -208,6 +211,7 @@ fun MainScreen(
     @param modeChange: action triggering change of app color mode
  */
 
+@Suppress("Unused", "UNUSED_PARAMETER")
 @Composable
 fun ScreenLayout(codeVM: CodeVM, currentColorGroup: String, currentLanguage:String, open: () -> Unit, save:() -> Unit, saveAs: () -> Unit,
                  openDirectory: () -> Unit, updateAutosaveState: () -> Unit, exitApp: () -> Unit, createFile: () -> Unit,
@@ -221,11 +225,14 @@ fun ScreenLayout(codeVM: CodeVM, currentColorGroup: String, currentLanguage:Stri
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         // Code area takes all available space
+        val fileUri = mainActivity.fileVM.fileUri.value
+        val ext = fileUri.lastPathSegment?.substringAfterLast('.', "") ?: ""
         CodeArea(
             modifier = Modifier.weight(1.0f), 
             currentColorGroup,
             currentLanguage, 
-            codeVM
+            codeVM,
+            fileExtension = ext
         )
         
         // Bottom toolbar with hamburger menu
@@ -475,7 +482,8 @@ fun GitDialogs(mainActivity: MainActivity, currentLanguage: String) {
 fun CodeAreaOnly(
     codeVM: CodeVM,
     currentColorGroup: String,
-    currentLanguage: String
+    currentLanguage: String,
+    fileExtension: String = ""
 ) {
     Column(
         modifier = Modifier
@@ -486,7 +494,8 @@ fun CodeAreaOnly(
             modifier = Modifier.fillMaxSize(),
             currentColorMode = currentColorGroup,
             currentLanguage = currentLanguage,
-            codeVM = codeVM
+            codeVM = codeVM,
+            fileExtension = fileExtension
         )
     }
 }

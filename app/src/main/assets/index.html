@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        html, body, #container {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #1e1e1e;
+        }
+    </style>
+</head>
+<body>
+<div id="container"></div>
+
+<script src="monaco/min/vs/loader.js"></script>
+<script>
+    window.onerror = function(msg, url, lineNo, columnNo, error) {
+        console.log("JS ERROR: " + msg + " at " + url + ":" + lineNo);
+        return false;
+    };
+
+    window.MonacoEnvironment = {
+        getWorkerUrl: function () {
+            return 'data:text/javascript;charset=utf-8,';
+        }
+    };
+
+    require.config({ paths: { 'vs': 'monaco/min/vs' }});
+
+    let pendingCode = null;
+    let pendingExtension = "";
+
+    function getLanguageByExtension(ext) {
+        switch ((ext || '').toLowerCase()) {
+            case 'java': return 'java';
+            case 'kt': case 'kts': return 'kotlin';
+            case 'js': return 'javascript';
+            case 'ts': return 'typescript';
+            case 'html': case 'htm': return 'html';
+            case 'css': return 'css';
+            case 'json': return 'json';
+            case 'xml': return 'xml';
+            case 'c': case 'cpp': case 'cxx': case 'cc': case 'h': case 'hpp': return 'cpp';
+            case 'cs': return 'csharp';
+            case 'py': return 'python';
+            case 'php': return 'php';
+            case 'sh': case 'bash': return 'shell';
+            case 'md': return 'markdown';
+            case 'sql': return 'sql';
+            case 'yaml': case 'yml': return 'yaml';
+            default: return 'plaintext';
+        }
+    }
+
+    require(['vs/editor/editor.main'], function() {
+        console.log("RequireJS loaded editor.main successfully");
+        const initialLang = pendingExtension ? getLanguageByExtension(pendingExtension) : 'java';
+        const initialVal = pendingCode !== null ? pendingCode : "// Welcome to Code Editor!\n// Open a file to start editing.";
+
+        window.editor = monaco.editor.create(document.getElementById('container'), {
+            value: initialVal,
+            language: initialLang,
+            theme: 'vs-dark',
+            automaticLayout: true,
+            minimap: { enabled: false },
+            fontSize: 14,
+            scrollBeyondLastLine: false,
+            wordWrap: 'on',
+            readOnly: false,
+            domReadOnly: false,
+            autoClosingBrackets: 'always',
+            autoClosingQuotes: 'always',
+            quickSuggestions: {
+                other: true,
+                comments: true,
+                strings: true
+            },
+            suggestOnTriggerCharacters: true,
+            wordBasedSuggestions: 'currentDocument'
+        });
+
+        pendingCode = null;
+
+        if (window.AndroidBridge) {
+            console.log("Calling AndroidBridge.onEditorReady()...");
+            window.AndroidBridge.onEditorReady();
+        }
+
+        window.editor.onDidChangeModelContent(() => {
+            if (window.AndroidBridge) {
+                window.AndroidBridge.onTextChanged(window.editor.getValue());
+            }
+        });
+
+        document.getElementById('container').addEventListener('click', function() {
+            if (window.editor) {
+                window.editor.focus();
+            }
+        });
+
+        window.addEventListener('resize', function() {
+            if (window.editor) {
+                window.editor.layout();
+            }
+        });
+        setTimeout(function() {
+            if (window.editor) {
+                window.editor.layout();
+            }
+        }, 300);
+    });
+
+    function base64ToUtf8(base64) {
+        try {
+            const binString = atob(base64);
+            const bytes = Uint8Array.from(binString, (m) => m.codePointAt(0));
+            return new TextDecoder().decode(bytes);
+        } catch (e) {
+            console.error("Failed to decode base64:", e);
+            return "";
+        }
+    }
+
+    function setEditorValueFromAndroid(base64Code, extension) {
+        const decoded = base64ToUtf8(base64Code);
+        if (window.editor) {
+            if (window.editor.getValue() !== decoded) {
+                window.editor.setValue(decoded);
+            }
+            if (extension) {
+                const lang = getLanguageByExtension(extension);
+                monaco.editor.setModelLanguage(window.editor.getModel(), lang);
+            }
+            window.editor.layout();
+        } else {
+            pendingCode = decoded;
+            pendingExtension = extension || "";
+        }
+    }
+
+    function editorSelectAll() {
+        if (window.editor) {
+            const model = window.editor.getModel();
+            window.editor.setSelection(model.getFullModelRange());
+            window.editor.focus();
+        }
+    }
+    function editorCopy() {
+        if (window.editor) {
+            const selection = window.editor.getSelection();
+            const text = window.editor.getModel().getValueInRange(selection);
+            if (window.AndroidBridge && window.AndroidBridge.onCopyRequested) {
+                window.AndroidBridge.onCopyRequested(text);
+            }
+        }
+    }
+    function editorPaste(base64Code) {
+        if (window.editor) {
+            const text = base64ToUtf8(base64Code);
+            const selection = window.editor.getSelection();
+            const id = { major: 1, minor: 1 };
+            const op = { identifier: id, range: selection, text: text, forceMoveMarkers: true };
+            window.editor.executeEdits("my-source", [op]);
+            window.editor.focus();
+        }
+    }
+    function editorUndo() {
+        if (window.editor) {
+            window.editor.trigger('keyboard', 'undo', null);
+            window.editor.focus();
+        }
+    }
+    function editorRedo() {
+        if (window.editor) {
+            window.editor.trigger('keyboard', 'redo', null);
+            window.editor.focus();
+        }
+    }
+</script>
+</body>
+</html>

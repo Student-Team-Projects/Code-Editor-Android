@@ -1,50 +1,132 @@
 package com.example.codeeditor;
 
+import android.annotation.SuppressLint;
+import android.util.Base64;
+import android.util.Log;
 import android.view.View;
-
-import com.amrdeveloper.codeview.CodeView;
-
-import java.util.Objects;
+import android.webkit.ConsoleMessage;
+import android.webkit.JavascriptInterface;
+import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 public class CodeEditorController {
 
-    public static CodeView getCodeEditor(MainActivity mainScreen){
-        CodeView codeEditor = mainScreen.findViewById(R.id.codeView);
-        lineNumberConfiguration(codeEditor, mainScreen);
+    @SuppressLint("SetJavaScriptEnabled")
+    public static WebView setupCodeEditor(MainActivity mainScreen) {
+        WebView codeEditor = mainScreen.findViewById(R.id.codeView);
+
+        WebSettings settings = codeEditor.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setAllowFileAccess(true);
+        settings.setAllowContentAccess(true);
+        settings.setAllowFileAccessFromFileURLs(true);
+        settings.setAllowUniversalAccessFromFileURLs(true);
+
+        codeEditor.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+                Log.d("MonacoJS", consoleMessage.message() + " -- Line "
+                        + consoleMessage.lineNumber() + " of "
+                        + consoleMessage.sourceId());
+                return true;
+            }
+        });
+
+        codeEditor.setWebViewClient(new WebViewClient());
+
+        // Tworzymy most Java-JavaScript. Metody w EditorBridge mogą być wywoływane z HTML-a.
+        codeEditor.addJavascriptInterface(new EditorBridge(mainScreen), "AndroidBridge");
+
+        // Wczytanie lokalnego pliku z katalogu assets
+        codeEditor.loadUrl("file:///android_asset/index.html");
+
         return codeEditor;
     }
 
-    public static void DisableCodeEditor(MainActivity mainScreen){
-        mainScreen.enableOpenFileHint();
-        CodeView codePanel = mainScreen.findViewById(R.id.codeView);
-        codePanel.setEnabled(false);
-        codePanel.setVisibility(View.INVISIBLE);
+    public static void DisableCodeEditor(MainActivity mainScreen) {
+        WebView codePanel = mainScreen.findViewById(R.id.codeView);
+        if (codePanel != null) {
+            codePanel.setEnabled(true);
+            codePanel.setVisibility(View.VISIBLE);
+        }
+        setCode("// Otwórz plik z menu File -> Open File lub utwórz nowy", mainScreen);
     }
 
-    public static void EnableCodeEditor(MainActivity mainScreen){
-        mainScreen.disableOpenFileHint();
-        CodeView codePanel = mainScreen.findViewById(R.id.codeView);
-        codePanel.setEnabled(true);
-        codePanel.setVisibility(View.VISIBLE);
+    public static void EnableCodeEditor(MainActivity mainScreen) {
+        WebView codePanel = mainScreen.findViewById(R.id.codeView);
+        if (codePanel != null) {
+            codePanel.setEnabled(true);
+            codePanel.setVisibility(View.VISIBLE);
+        }
     }
 
+    public static void setCode(String code, MainActivity mainScreen) {
+        WebView codeEditor = mainScreen.findViewById(R.id.codeView);
+        if (codeEditor == null) return;
 
-    private static void lineNumberConfiguration(CodeView codeEditor, MainActivity mainScreen){
-        codeEditor.setEnableLineNumber(true);
-        codeEditor.setEnableHighlightCurrentLine(true);
-        codeEditor.setHighlightCurrentLineColor(mainScreen.getColor(R.color.dark_gray));
-        codeEditor.setLineNumberTextColor(mainScreen.getColor(R.color.line_number_color));
-        codeEditor.setLineNumberTextSize(30);
+        String fileName = mainScreen.getCurrentFileName();
+        String extension = (fileName != null && fileName.contains("."))
+                ? fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase()
+                : "";
+
+        String encodedCode = Base64.encodeToString(code.getBytes(), Base64.NO_WRAP);
+
+        String jsCommand = "javascript:setEditorValueFromAndroid('" + encodedCode + "', '" + extension + "');";
+        codeEditor.evaluateJavascript(jsCommand, null);
     }
 
-    public static void setCode(String code, MainActivity mainScreen){
-        CodeView codeEditor = mainScreen.findViewById(R.id.codeView);
-        codeEditor.setText(code);
+    // acquiring code is async
+    public static void getCode(MainActivity mainScreen, ValueCallback<String> callback) {
+        WebView codeEditor = mainScreen.findViewById(R.id.codeView);
+        if (codeEditor == null) {
+            callback.onReceiveValue("");
+            return;
+        }
+
+        codeEditor.evaluateJavascript("window.editor ? window.editor.getValue() : '';", value -> {
+            if (value != null && value.length() >= 2 && value.startsWith("\"") && value.endsWith("\"")) {
+                String unescaped = value.substring(1, value.length() - 1)
+                        .replace("\\n", "\n")
+                        .replace("\\\"", "\"")
+                        .replace("\\'", "'")
+                        .replace("\\\\", "\\");
+                callback.onReceiveValue(unescaped);
+            } else {
+                callback.onReceiveValue(value != null ? value : "");
+            }
+        });
     }
 
-    public static String getCode(MainActivity mainScreen){
-        CodeView codeEditor = mainScreen.findViewById(R.id.codeView);
-        return Objects.requireNonNull(codeEditor.getText()).toString();
-    }
+    // listener
+    public static class EditorBridge {
+        private final MainActivity mainScreen;
 
+        public EditorBridge(MainActivity mainScreen) {
+            this.mainScreen = mainScreen;
+        }
+
+        @JavascriptInterface
+        public void onEditorReady() {
+            mainScreen.runOnUiThread(() -> {
+                String currentFile = mainScreen.getCurrentFileName();
+                if (currentFile != null) {
+                    try {
+                        CodeEditorController.setCode(FilesController.getFilesInside(currentFile, mainScreen), mainScreen);
+                    } catch (Exception e) {
+                        Log.e("CodeEditorController", "Error setting code on ready", e);
+                    }
+                } else {
+                    CodeEditorController.setCode("// Open file from menu File -> Open File or create new", mainScreen);
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void onTextChanged(String currentText) {
+        }
+    }
 }
