@@ -7,10 +7,10 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -23,6 +23,7 @@ import com.example.codeeditor.composables.MainScreen
 import com.example.codeeditor.constants.*
 import com.example.codeeditor.model.FileLogic
 import com.example.codeeditor.ui.theme.CodeEditorTheme
+import com.example.codeeditor.ui.theme.ThemeManager
 import com.example.codeeditor.viewmodels.CodeVM
 import com.example.codeeditor.viewmodels.DirectoryEntry
 import com.example.codeeditor.viewmodels.DirectoryTreeVM
@@ -33,6 +34,7 @@ import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import kotlin.system.exitProcess
 import android.provider.Settings
+import android.content.pm.ActivityInfo
 import androidx.core.app.ActivityCompat
 import android.Manifest
 import kotlinx.coroutines.CoroutineScope
@@ -41,7 +43,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
     var showGitMenu by mutableStateOf(false)
     var currentLanguage by mutableStateOf("English")
@@ -119,7 +121,9 @@ class MainActivity : ComponentActivity() {
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        ThemeManager.initTheme(this)
         super.onCreate(savedInstanceState)
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         requestStoragePermissions()
         setContent {
             CodeEditorTheme {

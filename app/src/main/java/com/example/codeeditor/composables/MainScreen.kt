@@ -38,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import com.example.codeeditor.ui.theme.ThemeManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import com.example.codeeditor.R
@@ -95,7 +96,7 @@ fun MainScreen(
     mainActivity: MainActivity
 ) {
     var directoryTreeWidthFraction by remember { mutableFloatStateOf(0.3f) }
-    var currentColorMode by remember { mutableStateOf("Dark") }
+    var currentColorMode by remember { mutableStateOf(ThemeManager.getColorMode(mainActivity)) }
     var autosaveState = true
     
     // Git dialogs
@@ -181,7 +182,9 @@ fun MainScreen(
                     defaultAutosave = autosaveState,
                     textColor = ColorGroups[currentColorMode]!!.textColor,
                     modeChange = {
-                        currentColorMode = if (currentColorMode == "Normal") "Dark" else "Normal"
+                        val newMode = if (currentColorMode == "Normal") "Dark" else "Normal"
+                        currentColorMode = newMode
+                        ThemeManager.setColorMode(mainActivity, newMode)
                     }
                 )
         }

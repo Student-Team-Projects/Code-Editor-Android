@@ -47,6 +47,7 @@ android {
 }
 
 dependencies {
+    implementation libs.androidx.activity.ktx
     implementation libs.androidx.core.ktx
     implementation libs.androidx.lifecycle.runtime.ktx
     implementation libs.androidx.activity.compose
@@ -68,9 +69,9 @@ dependencies {
     implementation 'org.eclipse.jgit:org.eclipse.jgit:6.9.0.202403050737-r'
 
     // Библиотеки для дизайна
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.11.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation libs.androidx.appcompat
+    implementation libs.material
+    implementation libs.androidx.constraintlayout
 
     // Редактор кода
     implementation 'com.github.AmrDeveloper:CodeView:2370ea6'
