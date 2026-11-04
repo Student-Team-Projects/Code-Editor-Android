@@ -1,5 +1,6 @@
 package com.example.codeeditor.composables
 
+import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -57,6 +58,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.runtime.mutableStateListOf
 import com.example.codeeditor.activities.MainActivity
+import com.example.codeeditor.activities.TermuxTestActivity
 import com.example.codeeditor.constants.*
 import com.example.codeeditor.viewmodels.CodeVM
 import com.example.codeeditor.viewmodels.DirectoryEntry
@@ -674,6 +676,15 @@ fun ButtonRow(codeVM: CodeVM, currentColorMode: String, currentLanguage: String,
                         )
                     }
                 }
+
+                DropdownMenuItem(
+                    text = { Text("Termux") },
+                    onClick = {
+                        showMainMenu = false
+                        showGitSubmenu = false
+                        mainActivity.startActivity(Intent(mainActivity, TermuxTestActivity::class.java))
+                    }
+                )
                 
                 Divider()
                 

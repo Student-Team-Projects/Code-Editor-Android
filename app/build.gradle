@@ -42,6 +42,7 @@ android {
     packaging {
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
+            excludes += '/META-INF/versions/9/OSGI-INF/MANIFEST.MF' // from BouncyCastle jars
         }
     }
 }
@@ -73,4 +74,9 @@ dependencies {
     implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.webkit:webkit:1.12.1'
+
+    // Termux over SSH. bcprov is declared because sshj only puts it on the runtime classpath.
+    implementation 'com.hierynomus:sshj:0.41.2'
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.84' // keep in sync with sshj's POM
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3'
 }
