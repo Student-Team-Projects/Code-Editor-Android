@@ -56,14 +56,19 @@ fun CodeArea(
 ) {
     var isEditorReady by remember { mutableStateOf(false) }
     var webViewInstance by remember { mutableStateOf<WebView?>(null) }
+    var isSelfUpdate by remember { mutableStateOf(false) }
     val clipboardManager = LocalClipboardManager.current
 
     val currentCode = codeVM.text.value
 
     LaunchedEffect(currentCode, isEditorReady, fileExtension) {
         if (isEditorReady && webViewInstance != null) {
-            val encodedCode = Base64.encodeToString(currentCode.toByteArray(), Base64.NO_WRAP)
-            webViewInstance?.evaluateJavascript("javascript:setEditorValueFromAndroid('$encodedCode', '$fileExtension');", null)
+            if (isSelfUpdate) {
+                isSelfUpdate = false
+            } else {
+                val encodedCode = Base64.encodeToString(currentCode.toByteArray(), Base64.NO_WRAP)
+                webViewInstance?.evaluateJavascript("javascript:setEditorValueFromAndroid('$encodedCode', '$fileExtension');", null)
+            }
         }
     }
 
@@ -180,6 +185,7 @@ fun CodeArea(
                         fun onTextChanged(currentText: String) {
                             post {
                                 if (currentText != codeVM.text.value) {
+                                    isSelfUpdate = true
                                     codeVM.updateText(currentText)
                                 }
                             }
