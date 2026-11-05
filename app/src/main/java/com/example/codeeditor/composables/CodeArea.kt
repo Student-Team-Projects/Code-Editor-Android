@@ -154,6 +154,7 @@ fun CodeArea(
                     settings.allowUniversalAccessFromFileURLs = true
 
                     setOnTouchListener { v, event ->
+                        v.parent?.requestDisallowInterceptTouchEvent(true)
                         if (event.action == MotionEvent.ACTION_DOWN) {
                             if (!v.hasFocus()) {
                                 v.requestFocus()

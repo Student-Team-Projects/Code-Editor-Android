@@ -11,6 +11,9 @@
             padding: 0;
             overflow: hidden;
             background-color: #1e1e1e;
+            touch-action: none;
+            -webkit-user-select: text !important;
+            user-select: text !important;
         }
     </style>
 </head>
@@ -66,6 +69,12 @@
             domReadOnly: false,
             autoClosingBrackets: 'always',
             autoClosingQuotes: 'always',
+            selectOnLineNumbers: true,
+            selectionHighlight: true,
+            dragAndDrop: true,
+            mouseWheelZoom: true,
+            smoothScrolling: true,
+            multiCursorModifier: 'ctrlCmd',
             quickSuggestions: {
                 other: true,
                 comments: true,
@@ -107,10 +116,100 @@
             }, 300);
         });
 
-        document.getElementById('container').addEventListener('click', function() {
-            if (window.editor) {
-                window.editor.focus();
+        // Pointer/Mouse selection engine for Android WebView
+        let isMouseDown = false;
+        let startPos = null;
+        let lastClickTime = 0;
+        let clickCount = 0;
+
+        const containerEl = document.getElementById('container');
+
+        // Prevent Android WebView's native SelectionPopupController from overriding DOM selection
+        containerEl.addEventListener('selectstart', function(e) {
+            e.preventDefault();
+        });
+
+        containerEl.addEventListener('pointerdown', function(e) {
+            if (e.button === 0 || e.pointerType === 'mouse' || e.pointerType === 'pen' || e.pointerType === 'touch') {
+                isMouseDown = true;
+                const currentTime = Date.now();
+                const timeDiff = currentTime - lastClickTime;
+
+                if (timeDiff < 350) {
+                    clickCount++;
+                } else {
+                    clickCount = 1;
+                }
+                lastClickTime = currentTime;
+
+                if (window.editor) {
+                    const target = window.editor.getTargetAtClientPoint(e.clientX, e.clientY);
+                    if (target && target.position) {
+                        const targetPos = target.position;
+
+                        if (clickCount === 2) {
+                            // DOUBLE-CLICK: Select word with multi-phase enforcement
+                            const selectWord = () => {
+                                const model = window.editor.getModel();
+                                if (model) {
+                                    const word = model.getWordAtPosition(targetPos);
+                                    if (word) {
+                                        const wordRange = new monaco.Range(
+                                            targetPos.lineNumber,
+                                            word.startColumn,
+                                            targetPos.lineNumber,
+                                            word.endColumn
+                                        );
+                                        window.editor.setSelection(wordRange);
+                                        window.editor.focus();
+                                    }
+                                }
+                            };
+                            selectWord();
+                            setTimeout(selectWord, 50);
+                            setTimeout(selectWord, 150);
+                        } else if (clickCount >= 3) {
+                            // TRIPLE-CLICK: Select line with multi-phase enforcement
+                            const selectLine = () => {
+                                const model = window.editor.getModel();
+                                if (model) {
+                                    const maxCol = model.getLineMaxColumn(targetPos.lineNumber);
+                                    const lineRange = new monaco.Range(
+                                        targetPos.lineNumber,
+                                        1,
+                                        targetPos.lineNumber,
+                                        maxCol
+                                    );
+                                    window.editor.setSelection(lineRange);
+                                    window.editor.focus();
+                                }
+                            };
+                            selectLine();
+                            setTimeout(selectLine, 50);
+                            setTimeout(selectLine, 150);
+                            clickCount = 0;
+                        } else {
+                            // SINGLE-CLICK: Set cursor & drag start
+                            startPos = targetPos;
+                            window.editor.setPosition(startPos);
+                            window.editor.focus();
+                        }
+                    }
+                }
             }
+        });
+
+        containerEl.addEventListener('pointermove', function(e) {
+            if (isMouseDown && window.editor && startPos && clickCount <= 1) {
+                const target = window.editor.getTargetAtClientPoint(e.clientX, e.clientY);
+                if (target && target.position) {
+                    window.editor.setSelection(monaco.Range.fromPositions(startPos, target.position));
+                }
+            }
+        });
+
+        document.addEventListener('pointerup', function(e) {
+            isMouseDown = false;
         });
 
         window.addEventListener('resize', function() {
@@ -178,13 +277,25 @@
         const decoded = base64ToUtf8(base64Code);
         if (window.editor) {
             if (window.editor.getValue() !== decoded) {
+                const currentSelection = window.editor.getSelection();
+                const currentScrollTop = window.editor.getScrollTop();
                 window.editor.setValue(decoded);
+                if (currentSelection) {
+                    window.editor.setSelection(currentSelection);
+                }
+                if (currentScrollTop) {
+                    window.editor.setScrollTop(currentScrollTop);
+                }
             }
             if (extension) {
-                const lang = getLanguageByExtension(extension);
-                monaco.editor.setModelLanguage(window.editor.getModel(), lang);
+                const model = window.editor.getModel();
+                if (model) {
+                    const newLang = getLanguageByExtension(extension);
+                    if (model.getLanguageId() !== newLang) {
+                        monaco.editor.setModelLanguage(model, newLang);
+                    }
+                }
             }
-            window.editor.layout();
         } else {
             pendingCode = decoded;
             pendingExtension = extension || "";
