@@ -357,6 +357,18 @@
             window.editor.focus();
         }
     }
+    function editorTriggerFind() {
+        if (window.editor) {
+            window.editor.getAction('actions.find').run();
+            window.editor.focus();
+        }
+    }
+    function editorTriggerComment() {
+        if (window.editor) {
+            window.editor.getAction('editor.action.commentLine').run();
+            window.editor.focus();
+        }
+    }
 </script>
 </body>
 </html>

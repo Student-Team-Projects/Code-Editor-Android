@@ -12,32 +12,21 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.codeeditor.constants.BorderThickness
 import com.example.codeeditor.constants.ButtonRowPadding
@@ -80,6 +69,7 @@ fun CodeArea(
             .border(BorderThickness, ColorGroups[currentColorMode]!!.borderColor, RoundedCornerShape(CornerRadius))
             .background(Color(0xFF1E1E1E))
     ) {
+        /* TODO: Decide what to do with toolbar
         // Compact Toolbar
         Row(
             modifier = Modifier
@@ -90,31 +80,43 @@ fun CodeArea(
             verticalAlignment = Alignment.CenterVertically
         ) {
             val btnColors = ButtonDefaults.textButtonColors(contentColor = Color.LightGray)
-            val compactPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp)
+            val compactPadding = PaddingValues(horizontal = 4.dp, vertical = 0.dp)
 
             TextButton(
                 onClick = { webViewInstance?.evaluateJavascript("javascript:editorUndo();", null) },
                 colors = btnColors,
                 contentPadding = compactPadding
-            ) { Text("Undo", fontSize = 12.sp) }
+            ) { Text("Undo", fontSize = 11.sp) }
 
             TextButton(
                 onClick = { webViewInstance?.evaluateJavascript("javascript:editorRedo();", null) },
                 colors = btnColors,
                 contentPadding = compactPadding
-            ) { Text("Redo", fontSize = 12.sp) }
+            ) { Text("Redo", fontSize = 11.sp) }
+
+            TextButton(
+                onClick = { webViewInstance?.evaluateJavascript("javascript:editorTriggerFind();", null) },
+                colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF81C784)),
+                contentPadding = compactPadding
+            ) { Text("Find", fontSize = 11.sp) }
+
+            TextButton(
+                onClick = { webViewInstance?.evaluateJavascript("javascript:editorTriggerComment();", null) },
+                colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFFFFB74D)),
+                contentPadding = compactPadding
+            ) { Text("Comment", fontSize = 11.sp) }
 
             TextButton(
                 onClick = { webViewInstance?.evaluateJavascript("javascript:editorSelectAll();", null) },
                 colors = btnColors,
                 contentPadding = compactPadding
-            ) { Text("Select All", fontSize = 12.sp) }
+            ) { Text("Select All", fontSize = 11.sp) }
 
             TextButton(
                 onClick = { webViewInstance?.evaluateJavascript("javascript:editorCopy();", null) },
                 colors = btnColors,
                 contentPadding = compactPadding
-            ) { Text("Copy", fontSize = 12.sp) }
+            ) { Text("Copy", fontSize = 11.sp) }
 
             TextButton(
                 onClick = {
@@ -124,18 +126,20 @@ fun CodeArea(
                 },
                 colors = btnColors,
                 contentPadding = compactPadding
-            ) { Text("Paste", fontSize = 12.sp) }
+            ) { Text("Paste", fontSize = 11.sp) }
 
             TextButton(
                 onClick = { webViewInstance?.evaluateJavascript("javascript:editorTriggerSuggest();", null) },
                 colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF4FC3F7)),
                 contentPadding = compactPadding
-            ) { Text("Suggest", fontSize = 12.sp) }
+            ) { Text("Suggest", fontSize = 11.sp) }
         }
+        */
 
         AndroidView(
             factory = { context ->
                 WebView(context).apply {
+                    id = com.example.codeeditor.R.id.codeView
                     layoutParams = ViewGroup.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT
@@ -204,9 +208,7 @@ fun CodeArea(
                     webViewInstance = this
                 }
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
+            modifier = Modifier.fillMaxSize()
         )
     }
 }
