@@ -62,6 +62,28 @@
             android:background="?attr/colorSecondary"
             tools:ignore="MissingConstraints" />
 
+        <!-- 10% width Left Sidebar Panel -->
+        <LinearLayout
+            android:id="@+id/LeftSidebarLayout"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginTop="58dp"
+            android:background="?attr/colorSurface"
+            android:orientation="vertical"
+            app:layout_constraintWidth_percent="0.10"
+            app:layout_constraintStart_toStartOf="parent"
+            tools:ignore="MissingConstraints">
+        </LinearLayout>
+
+        <!-- 2px Divider bar between LeftSidebarLayout and ExplorerLayout -->
+        <View
+            android:layout_width="2dp"
+            android:layout_height="match_parent"
+            android:layout_marginTop="58dp"
+            app:layout_constraintStart_toEndOf="@+id/LeftSidebarLayout"
+            android:background="?attr/colorSecondary"
+            tools:ignore="MissingConstraints" />
+
         <LinearLayout
             android:id="@+id/ExplorerLayout"
             android:layout_width="300dp"
@@ -70,6 +92,8 @@
             android:gravity="center"
             android:orientation="horizontal"
             android:layout_marginTop="58dp"
+            app:layout_constraintStart_toEndOf="@+id/LeftSidebarLayout"
+            android:layout_marginStart="2dp"
             tools:ignore="MissingConstraints">
 
             <ScrollView
@@ -94,17 +118,19 @@
         <View
             android:layout_width="2dp"
             android:layout_height="match_parent"
-            android:layout_marginStart="300dp"
             android:layout_marginTop="58dp"
+            app:layout_constraintStart_toEndOf="@+id/ExplorerLayout"
             android:background="?attr/colorSecondary"
             tools:ignore="MissingConstraints" />
 
         <FrameLayout
             android:id="@+id/CodeTextLayout"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_marginStart="302dp"
             android:layout_marginTop="58dp"
+            app:layout_constraintStart_toEndOf="@+id/ExplorerLayout"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="2dp"
             android:background="@drawable/code_text_panel_background"
             tools:ignore="MissingConstraints">
 
@@ -120,9 +146,8 @@
     <FrameLayout
         android:id="@+id/NewFileLayout"
         android:layout_width="500dp"
-        android:layout_height="200dp"
-        android:layout_marginTop="200dp"
-        android:layout_marginStart="400dp"
+        android:layout_height="230dp"
+        android:layout_gravity="center"
         android:background="@drawable/text_enter_background">
 
         <TextView
@@ -145,11 +170,19 @@
             android:layout_marginTop="15dp"
             app:srcCompat="@android:drawable/ic_menu_close_clear_cancel" />
 
+        <Spinner
+            android:id="@+id/NewFileDirectorySpinner"
+            android:layout_width="400dp"
+            android:layout_height="45dp"
+            android:layout_marginStart="50dp"
+            android:layout_marginTop="50dp"
+            android:background="@drawable/text_enter_field_background" />
+
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/NewFileEnterBackground"
             android:layout_width="400dp"
             android:layout_marginStart="50dp"
-            android:layout_marginTop="55dp"
+            android:layout_marginTop="100dp"
             android:layout_height="60dp"
             android:background="@drawable/text_enter_field_background"
             android:gravity="center_horizontal|center_vertical">
@@ -164,10 +197,10 @@
 
         <TextView
             android:id="@+id/NewFileError"
-            android:layout_width="250dp"
-            android:layout_height="50dp"
+            android:layout_width="230dp"
+            android:layout_height="40dp"
             android:layout_marginStart="50dp"
-            android:layout_marginTop="130dp"
+            android:layout_marginTop="170dp"
             android:fontFamily="@font/uncutsans_regularitalic"
             android:textColor="@color/error_red"
             android:gravity="center"
@@ -176,9 +209,9 @@
         <Button
             android:id="@+id/NewFileButtonSubmit"
             android:layout_width="100dp"
-            android:layout_height="50dp"
+            android:layout_height="45dp"
             android:layout_marginStart="350dp"
-            android:layout_marginTop="130dp"
+            android:layout_marginTop="170dp"
             android:textColor="?attr/colorOnPrimary"
             android:text="Create"
             android:background="@drawable/open_button_background" />

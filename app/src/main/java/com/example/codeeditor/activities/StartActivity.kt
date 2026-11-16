@@ -39,18 +39,20 @@ class StartActivity : AppCompatActivity() {
             adjustSizes()
         }
 
-        val navigateToMain = {
-            val intent = Intent(this, MainActivity::class.java)
+        findViewById<Button>(R.id.continueButton)?.setOnClickListener {
+            val intent = Intent(this, MainActivity::class.java).apply {
+                putExtra("resume_session", true)
+            }
             startActivity(intent)
             finish()
         }
 
-        findViewById<Button>(R.id.continueButton)?.setOnClickListener {
-            navigateToMain()
-        }
-
         findViewById<Button>(R.id.newButton)?.setOnClickListener {
-            navigateToMain()
+            val intent = Intent(this, MainActivity::class.java).apply {
+                putExtra("open_folder_picker", true)
+            }
+            startActivity(intent)
+            finish()
         }
     }
 

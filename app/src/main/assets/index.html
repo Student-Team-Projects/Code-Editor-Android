@@ -150,6 +150,11 @@
                 window.editor.focus();
             }
         });
+        document.getElementById('container').addEventListener('touchstart', function() {
+            if (window.editor) {
+                window.editor.focus();
+            }
+        });
 
         window.addEventListener('resize', function() {
             if (window.editor) {
@@ -199,11 +204,10 @@
         }
     }
 
-    function setEditorValueFromAndroid(base64Code, extension) {
-        const decoded = base64ToUtf8(base64Code);
+    function setEditorValueFromAndroid(codeText, extension) {
         if (window.editor) {
-            if (window.editor.getValue() !== decoded) {
-                window.editor.setValue(decoded);
+            if (window.editor.getValue() !== codeText) {
+                window.editor.setValue(codeText);
             }
             if (extension) {
                 const lang = getLanguageByExtension(extension);
@@ -211,7 +215,7 @@
             }
             window.editor.layout();
         } else {
-            pendingCode = decoded;
+            pendingCode = codeText;
             pendingExtension = extension || "";
         }
     }

@@ -1,4 +1,3 @@
-- [ ] Update DirectoryTreeController.java for absolute-path keys and recursive nesting
-- [ ] Update MainActivity.java to enable explorer panel by default on startup
+- [/] Implement double-click detection for files in DirectoryTreeController.java
 - [ ] Verify build with Gradle
 - [ ] Create walkthrough artifact

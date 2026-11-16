@@ -3,6 +3,7 @@ package com.example.codeeditor;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
@@ -45,6 +46,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -67,6 +69,77 @@ public class MainActivity extends AppCompatActivity {
     public boolean showAddFilesDialog = false;
     public List<String> availableGitFiles = new ArrayList<>();
     public FileVM fileVM;
+
+    public static class DirItem {
+        public final String displayName;
+        public final File localFile;
+        public final DocumentFile docFile;
+        public final Uri uri;
+
+        public DirItem(String displayName, File localFile, DocumentFile docFile, Uri uri) {
+            this.displayName = displayName;
+            this.localFile = localFile;
+            this.docFile = docFile;
+            this.uri = uri;
+        }
+
+        @NonNull
+        @Override
+        public String toString() {
+            return displayName;
+        }
+    }
+
+    public List<DirItem> getRecursiveDirectories() {
+        List<DirItem> list = new ArrayList<>();
+        if (currentDirectoryUri != null) {
+            DocumentFile rootDoc = DocumentFile.fromTreeUri(this, currentDirectoryUri);
+            if (rootDoc != null && rootDoc.isDirectory()) {
+                collectDocumentDirectories(rootDoc, "", list);
+            }
+        } else {
+            File rootDir = null;
+            if (currentProjectPath != null && !currentProjectPath.isEmpty()) {
+                rootDir = FilesController.getFileByPath(currentProjectPath, this);
+            }
+            if (rootDir == null || !rootDir.exists()) {
+                rootDir = getFilesDir();
+            }
+            collectLocalDirectories(rootDir, "", list);
+        }
+        if (list.isEmpty()) {
+            list.add(new DirItem("Root", getFilesDir(), null, Uri.fromFile(getFilesDir())));
+        }
+        return list;
+    }
+
+    private void collectLocalDirectories(File dir, String indent, List<DirItem> list) {
+        if (dir == null || !dir.exists() || !dir.isDirectory()) return;
+        String name = indent.isEmpty() ? (dir.getName().isEmpty() ? "Root" : dir.getName()) : indent + dir.getName();
+        list.add(new DirItem(name, dir, null, Uri.fromFile(dir)));
+        File[] children = dir.listFiles();
+        if (children != null) {
+            for (File child : children) {
+                if (child.isDirectory()) {
+                    collectLocalDirectories(child, indent + "   📁 ", list);
+                }
+            }
+        }
+    }
+
+    private void collectDocumentDirectories(DocumentFile doc, String indent, List<DirItem> list) {
+        if (doc == null || !doc.isDirectory()) return;
+        String name = indent.isEmpty() ? (doc.getName() == null ? "Root" : doc.getName()) : indent + doc.getName();
+        list.add(new DirItem(name, null, doc, doc.getUri()));
+        DocumentFile[] children = doc.listFiles();
+        if (children != null) {
+            for (DocumentFile child : children) {
+                if (child.isDirectory()) {
+                    collectDocumentDirectories(child, indent + "   📁 ", list);
+                }
+            }
+        }
+    }
 
     private final ActivityResultLauncher<String[]> openDocumentLauncher = registerForActivityResult(
             new ActivityResultContracts.OpenDocument(),
@@ -107,6 +180,26 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void openFileFromUri(Uri uri) {
+        if (currentFileUri != null && !currentFileUri.equals(uri)) {
+            final Uri oldUri = currentFileUri;
+            CodeEditorController.getCode(this, content -> {
+                try {
+                    OutputStream os = getContentResolver().openOutputStream(oldUri, "wt");
+                    if (os != null) {
+                        os.write(content.getBytes());
+                        os.close();
+                    }
+                } catch (Exception ignored) {}
+            });
+        }
+        if (currentFileName != null) {
+            final String oldFileName = currentFileName;
+            currentFileName = null;
+            CodeEditorController.getCode(this, content -> {
+                FilesController.saveFile(oldFileName, content, MainActivity.this);
+            });
+        }
+
         try {
             StringBuilder stringBuilder = new StringBuilder();
             InputStream inputStream = getContentResolver().openInputStream(uri);
@@ -134,6 +227,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void saveSessionToPrefs() {
+        SharedPreferences prefs = getSharedPreferences("app_session", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString("last_project_path", currentProjectPath);
+        editor.putString("last_directory_uri", currentDirectoryUri != null ? currentDirectoryUri.toString() : null);
+        editor.apply();
+    }
+
     public void openDirectoryFromUri(Uri uri) {
         try {
             currentDirectoryUri = uri;
@@ -141,6 +242,7 @@ public class MainActivity extends AppCompatActivity {
             if (docFile != null) {
                 currentProjectPath = uri.toString();
                 DirectoryTreeController.setEnabledForDocumentFile(this, docFile);
+                saveSessionToPrefs();
             }
         } catch (Exception e) {
             Log.e("MainActivity", "Error opening directory: " + uri, e);
@@ -148,49 +250,52 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void createNewFileInOpenedFolder(String fileName) throws Exception {
+    public void createNewFileInOpenedFolder(String fileName, DirItem targetDirItem) throws Exception {
         if (fileName == null || fileName.trim().isEmpty()) {
             throw new Exception("File name cannot be empty");
         }
         fileName = fileName.trim();
 
-        if (currentDirectoryUri != null) {
-            DocumentFile docDir = DocumentFile.fromTreeUri(this, currentDirectoryUri);
-            if (docDir != null && docDir.isDirectory()) {
-                DocumentFile existing = docDir.findFile(fileName);
-                if (existing != null && existing.exists()) {
-                    throw new Exception("File " + fileName + " already exists in folder");
-                }
+        if (targetDirItem != null && targetDirItem.docFile != null) {
+            DocumentFile docDir = targetDirItem.docFile;
+            DocumentFile existing = docDir.findFile(fileName);
+            if (existing != null && existing.exists()) {
+                throw new Exception("File " + fileName + " already exists in folder");
+            }
 
-                String extension = "";
-                int dotIndex = fileName.lastIndexOf('.');
-                if (dotIndex > 0) {
-                    extension = fileName.substring(dotIndex + 1);
-                }
-                String mimeType = null;
-                if (!extension.isEmpty()) {
-                    mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension.toLowerCase());
-                }
-                if (mimeType == null) {
-                    mimeType = "*/*";
-                }
+            String extension = "";
+            int dotIndex = fileName.lastIndexOf('.');
+            if (dotIndex > 0) {
+                extension = fileName.substring(dotIndex + 1);
+            }
+            String mimeType = null;
+            if (!extension.isEmpty()) {
+                mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension.toLowerCase());
+            }
+            if (mimeType == null) {
+                mimeType = "*/*";
+            }
 
-                DocumentFile newDoc = docDir.createFile(mimeType, fileName);
-                if (newDoc != null) {
-                    openFileFromUri(newDoc.getUri());
-                    DirectoryTreeController.setEnabledForDocumentFile(this, docDir);
-                    Toast.makeText(this, "File created: " + newDoc.getName(), Toast.LENGTH_SHORT).show();
-                    return;
+            DocumentFile newDoc = docDir.createFile(mimeType, fileName);
+            if (newDoc != null) {
+                openFileFromUri(newDoc.getUri());
+                if (currentDirectoryUri != null) {
+                    DocumentFile rootDoc = DocumentFile.fromTreeUri(this, currentDirectoryUri);
+                    if (rootDoc != null) DirectoryTreeController.setEnabledForDocumentFile(this, rootDoc);
                 }
+                Toast.makeText(this, "File created: " + newDoc.getName(), Toast.LENGTH_SHORT).show();
+                return;
             }
         }
 
-        File targetDir = null;
-        if (currentProjectPath != null && !currentProjectPath.isEmpty()) {
-            targetDir = FilesController.getFileByPath(currentProjectPath, this);
-        }
+        File targetDir = (targetDirItem != null) ? targetDirItem.localFile : null;
         if (targetDir == null || !targetDir.exists()) {
-            targetDir = getFilesDir();
+            if (currentProjectPath != null && !currentProjectPath.isEmpty()) {
+                targetDir = FilesController.getFileByPath(currentProjectPath, this);
+            }
+            if (targetDir == null || !targetDir.exists()) {
+                targetDir = getFilesDir();
+            }
         }
 
         File newFile = new File(targetDir, fileName);
@@ -519,6 +624,19 @@ public class MainActivity extends AppCompatActivity {
                         CodeEditorController.getCode(MainActivity.this, content -> {
                             FilesController.saveFile(getCurrentFileName(), content, MainActivity.this);
                         });
+                    } else if (currentFileUri != null) {
+                        CodeEditorController.getCode(MainActivity.this, content -> {
+                            try {
+                                OutputStream os = getContentResolver().openOutputStream(currentFileUri, "wt");
+                                if (os != null) {
+                                    os.write(content.getBytes());
+                                    os.close();
+                                    Toast.makeText(MainActivity.this, "File saved", Toast.LENGTH_SHORT).show();
+                                }
+                            } catch (Exception e) {
+                                Toast.makeText(MainActivity.this, "Error saving file", Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     }
                     return true;
                 } else if (id == R.id.action_close_file) {
@@ -578,38 +696,62 @@ public class MainActivity extends AppCompatActivity {
         currentProjectPath = "";
         FilesController.createProjectsDirectory(this);
 
-        if (savedInstanceState != null) {
-            currentProjectPath = savedInstanceState.getString("currentProjectPath");
-            currentFileName = savedInstanceState.getString("currentFileName");
-            String dirUriStr = savedInstanceState.getString("currentDirectoryUri");
-            String fileUriStr = savedInstanceState.getString("currentFileUri");
-            if (dirUriStr != null) {
-                currentDirectoryUri = Uri.parse(dirUriStr);
-                DocumentFile docFile = DocumentFile.fromTreeUri(this, currentDirectoryUri);
-                if (docFile != null) {
-                    DirectoryTreeController.setEnabledForDocumentFile(this, docFile);
-                }
-            } else if (currentProjectPath != null && !currentProjectPath.isEmpty()) {
+        boolean resumeSession = getIntent().getBooleanExtra("resume_session", false);
+        boolean openFolderPicker = getIntent().getBooleanExtra("open_folder_picker", false);
+
+        if (openFolderPicker) {
+            getWindow().getDecorView().post(this::openDirectoryPicker);
+        } else if (resumeSession) {
+            SharedPreferences prefs = getSharedPreferences("app_session", MODE_PRIVATE);
+            String lastProj = prefs.getString("last_project_path", null);
+            String lastDirUri = prefs.getString("last_directory_uri", null);
+            if (lastDirUri != null) {
                 try {
-                    setCurrentProjectPath(currentProjectPath);
+                    openDirectoryFromUri(Uri.parse(lastDirUri));
+                } catch (Exception ignored) {}
+            } else if (lastProj != null && !lastProj.isEmpty()) {
+                try {
+                    setCurrentProjectPath(lastProj);
                 } catch (Exception ignored) {}
             } else {
                 try {
                     setCurrentProjectPath("");
                 } catch (Exception ignored) {}
             }
-            if (fileUriStr != null) {
-                currentFileUri = Uri.parse(fileUriStr);
-                openFileFromUri(currentFileUri);
-            } else if (currentFileName != null) {
+        } else {
+            if (savedInstanceState != null) {
+                currentProjectPath = savedInstanceState.getString("currentProjectPath");
+                currentFileName = savedInstanceState.getString("currentFileName");
+                String dirUriStr = savedInstanceState.getString("currentDirectoryUri");
+                String fileUriStr = savedInstanceState.getString("currentFileUri");
+                if (dirUriStr != null) {
+                    currentDirectoryUri = Uri.parse(dirUriStr);
+                    DocumentFile docFile = DocumentFile.fromTreeUri(this, currentDirectoryUri);
+                    if (docFile != null) {
+                        DirectoryTreeController.setEnabledForDocumentFile(this, docFile);
+                    }
+                } else if (currentProjectPath != null && !currentProjectPath.isEmpty()) {
+                    try {
+                        setCurrentProjectPath(currentProjectPath);
+                    } catch (Exception ignored) {}
+                } else {
+                    try {
+                        setCurrentProjectPath("");
+                    } catch (Exception ignored) {}
+                }
+                if (fileUriStr != null) {
+                    currentFileUri = Uri.parse(fileUriStr);
+                    openFileFromUri(currentFileUri);
+                } else if (currentFileName != null) {
+                    try {
+                        setCurrentFileName(currentFileName);
+                    } catch (Exception ignored) {}
+                }
+            } else {
                 try {
-                    setCurrentFileName(currentFileName);
+                    setCurrentProjectPath("");
                 } catch (Exception ignored) {}
             }
-        } else {
-            try {
-                setCurrentProjectPath("");
-            } catch (Exception ignored) {}
         }
     }
 
@@ -675,6 +817,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void setCurrentFileName(String fileName) throws Exception{
+        if (currentFileName != null && !currentFileName.equals(fileName)) {
+            final String oldFile = currentFileName;
+            CodeEditorController.getCode(this, content -> {
+                FilesController.saveFile(oldFile, content, MainActivity.this);
+            });
+        }
+        if (currentFileUri != null) {
+            final Uri oldUri = currentFileUri;
+            currentFileUri = null;
+            CodeEditorController.getCode(this, content -> {
+                try {
+                    OutputStream os = getContentResolver().openOutputStream(oldUri, "wt");
+                    if (os != null) {
+                        os.write(content.getBytes());
+                        os.close();
+                    }
+                } catch (Exception ignored) {}
+            });
+        }
         if(fileName == null){
             currentFileName = null;
             CodeEditorController.DisableCodeEditor(this);
@@ -688,6 +849,7 @@ public class MainActivity extends AppCompatActivity {
     public void setCurrentProjectPath(String projectPath) throws Exception{
         currentProjectPath = projectPath;
         DirectoryTreeController.setEnabled(this);
+        saveSessionToPrefs();
     }
 
     public String getCurrentFileName(){

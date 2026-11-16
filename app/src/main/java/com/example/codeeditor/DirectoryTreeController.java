@@ -17,11 +17,8 @@ import java.util.Map;
 
 public class DirectoryTreeController {
 
-    private static Map<String, Boolean> directoryColapsed;
-
-    static {
-        directoryColapsed = new HashMap<>();
-    }
+    private static final Map<String, Boolean> directoryColapsed = new HashMap<>();
+    private static final Map<String, Long> lastClickTimes = new HashMap<>();
 
     private static int getThemeColor(Context context, int attrId) {
         TypedValue tv = new TypedValue();
@@ -44,6 +41,7 @@ public class DirectoryTreeController {
         } else {
             button.setTextColor(getThemeColor(mainScreen, com.google.android.material.R.attr.colorOnSurface));
         }
+        button.setCompoundDrawablesWithIntrinsicBounds(null, null, null, null);
 
         button.setGravity(Gravity.LEFT);
         button.setAllCaps(false);
@@ -57,14 +55,22 @@ public class DirectoryTreeController {
                     generateExplorerTree(mainScreen);
                 }
                 else{
-                    try {
-                        String relPath = currentFile.getPath();
-                        if (relPath.contains("files/")) {
-                            relPath = relPath.substring(relPath.indexOf("files/") + 6);
+                    long now = System.currentTimeMillis();
+                    Long lastTime = lastClickTimes.get(pathKey);
+                    if (lastTime != null && (now - lastTime) < 400) {
+                        try {
+                            String relPath = currentFile.getPath();
+                            if (relPath.contains("files/")) {
+                                relPath = relPath.substring(relPath.indexOf("files/") + 6);
+                            }
+                            mainScreen.setCurrentFileName(relPath);
+                        } catch (Exception e) {
+                            Toast.makeText(mainScreen, currentFile.getPath(), Toast.LENGTH_SHORT).show();
                         }
-                        mainScreen.setCurrentFileName(relPath);
-                    } catch (Exception e) {
-                        Toast.makeText(mainScreen, currentFile.getPath(), Toast.LENGTH_SHORT).show();
+                        lastClickTimes.remove(pathKey);
+                    } else {
+                        lastClickTimes.put(pathKey, now);
+                        Toast.makeText(mainScreen, "Double-click to open file", Toast.LENGTH_SHORT).show();
                     }
                 }
             }
@@ -101,6 +107,7 @@ public class DirectoryTreeController {
         } else {
             button.setTextColor(getThemeColor(mainScreen, com.google.android.material.R.attr.colorOnSurface));
         }
+        button.setCompoundDrawablesWithIntrinsicBounds(null, null, null, null);
 
         button.setGravity(Gravity.LEFT);
         button.setAllCaps(false);
@@ -109,10 +116,17 @@ public class DirectoryTreeController {
             if (currentDoc.isDirectory()) {
                 boolean collapsed = Boolean.TRUE.equals(directoryColapsed.get(uriKey));
                 directoryColapsed.put(uriKey, !collapsed);
-                // Find root document file or refresh
                 refreshDocumentTree(mainScreen, currentDoc);
             } else {
-                mainScreen.openFileFromUri(currentDoc.getUri());
+                long now = System.currentTimeMillis();
+                Long lastTime = lastClickTimes.get(uriKey);
+                if (lastTime != null && (now - lastTime) < 400) {
+                    mainScreen.openFileFromUri(currentDoc.getUri());
+                    lastClickTimes.remove(uriKey);
+                } else {
+                    lastClickTimes.put(uriKey, now);
+                    Toast.makeText(mainScreen, "Double-click to open file", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
@@ -137,7 +151,6 @@ public class DirectoryTreeController {
     private static void refreshDocumentTree(MainActivity mainScreen, DocumentFile rootDoc) {
         LinearLayout scroller = mainScreen.findViewById(R.id.ExplorerScrollLayout);
         scroller.removeAllViews();
-        // Traverse up to find root or render from root
         DocumentFile parent = rootDoc;
         while (parent.getParentFile() != null) {
             parent = parent.getParentFile();

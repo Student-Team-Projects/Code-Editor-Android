@@ -3,10 +3,13 @@ package com.example.codeeditor;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.google.android.material.textfield.TextInputEditText;
 
+import java.util.List;
 import java.util.Objects;
 
 public class NewFileController {
@@ -33,8 +36,12 @@ public class NewFileController {
             @Override
             public void onClick(View v) {
                 String fileName = NewFileController.getEnteredText(mainScreen);
+                Spinner spinner = mainScreen.findViewById(R.id.NewFileDirectorySpinner);
+                MainActivity.DirItem selectedDir = (spinner != null && spinner.getSelectedItem() != null)
+                        ? (MainActivity.DirItem) spinner.getSelectedItem()
+                        : null;
                 try {
-                    mainScreen.createNewFileInOpenedFolder(fileName);
+                    mainScreen.createNewFileInOpenedFolder(fileName, selectedDir);
                 } catch (Exception e) {
                     setError(e.getMessage(), mainScreen);
                     return;
@@ -71,6 +78,12 @@ public class NewFileController {
 
         mainScreen.findViewById(R.id.NewFileClose).setEnabled(false);
         mainScreen.findViewById(R.id.NewFileClose).setVisibility(View.INVISIBLE);
+
+        Spinner spinner = mainScreen.findViewById(R.id.NewFileDirectorySpinner);
+        if (spinner != null) {
+            spinner.setEnabled(false);
+            spinner.setVisibility(View.INVISIBLE);
+        }
     }
 
     public static void setEnabled(MainActivity mainScreen){
@@ -91,6 +104,18 @@ public class NewFileController {
 
         mainScreen.findViewById(R.id.NewFileClose).setEnabled(true);
         mainScreen.findViewById(R.id.NewFileClose).setVisibility(View.INVISIBLE);
+
+        Spinner spinner = mainScreen.findViewById(R.id.NewFileDirectorySpinner);
+        if (spinner != null) {
+            spinner.setEnabled(true);
+            spinner.setVisibility(View.VISIBLE);
+            List<MainActivity.DirItem> dirs = mainScreen.getRecursiveDirectories();
+            ArrayAdapter<MainActivity.DirItem> adapter = new ArrayAdapter<>(
+                    mainScreen, android.R.layout.simple_spinner_item, dirs
+            );
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            spinner.setAdapter(adapter);
+        }
 
         TextInputEditText textInputer = mainScreen.findViewById(R.id.NewFileEnterField);
         if (textInputer != null) {

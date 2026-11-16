@@ -51,13 +51,11 @@
         </menu>
     </item>
 
-    <item
-        android:id="@+id/menu_settings"
-        android:title="Settings">
+    <item android:title="Settings">
         <menu>
             <item
                 android:id="@+id/action_toggle_theme"
-                android:title="Toggle Dark Mode" />
+                android:title="Switch Theme" />
             <item
                 android:id="@+id/action_file_explorer"
                 android:title="File Explorer" />

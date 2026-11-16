@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.webkit.ConsoleMessage;
@@ -22,13 +21,23 @@ public class CodeEditorController {
     public static WebView setupCodeEditor(MainActivity mainScreen) {
         WebView codeEditor = mainScreen.findViewById(R.id.codeView);
 
+        codeEditor.setFocusable(true);
+        codeEditor.setFocusableInTouchMode(true);
+        codeEditor.requestFocus();
+
         WebSettings settings = codeEditor.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
+        settings.setDatabaseEnabled(true);
         settings.setAllowFileAccess(true);
         settings.setAllowContentAccess(true);
         settings.setAllowFileAccessFromFileURLs(true);
         settings.setAllowUniversalAccessFromFileURLs(true);
+        settings.setSupportZoom(true);
+        settings.setLoadWithOverviewMode(true);
+        settings.setUseWideViewPort(true);
+
+        codeEditor.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
         codeEditor.setWebChromeClient(new WebChromeClient() {
             @Override
@@ -65,7 +74,18 @@ public class CodeEditorController {
         if (codePanel != null) {
             codePanel.setEnabled(true);
             codePanel.setVisibility(View.VISIBLE);
+            codePanel.requestFocus();
         }
+    }
+
+    private static String escapeJs(String str) {
+        if (str == null) return "";
+        return str.replace("\\", "\\\\")
+                  .replace("\"", "\\\"")
+                  .replace("'", "\\'")
+                  .replace("\n", "\\n")
+                  .replace("\r", "\\r")
+                  .replace("\t", "\\t");
     }
 
     public static void setCode(String code, MainActivity mainScreen) {
@@ -77,9 +97,9 @@ public class CodeEditorController {
                 ? fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase()
                 : "";
 
-        String encodedCode = Base64.encodeToString(code.getBytes(), Base64.NO_WRAP);
+        String escapedCode = escapeJs(code);
 
-        String jsCommand = "javascript:setEditorValueFromAndroid('" + encodedCode + "', '" + extension + "');";
+        String jsCommand = "javascript:setEditorValueFromAndroid(\"" + escapedCode + "\", \"" + extension + "\");";
         codeEditor.evaluateJavascript(jsCommand, null);
     }
 
@@ -131,6 +151,9 @@ public class CodeEditorController {
 
         @JavascriptInterface
         public void onTextChanged(String currentText) {
+            mainScreen.runOnUiThread(() -> {
+                // Keep track of text changes if needed
+            });
         }
 
         @JavascriptInterface
