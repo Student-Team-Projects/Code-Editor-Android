@@ -4,6 +4,10 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
+import android.graphics.drawable.ShapeDrawable;
+import android.graphics.drawable.shapes.RectShape;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -25,6 +29,7 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -404,8 +409,49 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void updateThemeColors() {
+        boolean isDark = ThemeManager.INSTANCE.isDark(ThemeManager.INSTANCE.getColorMode(this));
+        
+        int surfaceColor = isDark ? getColor(R.color.purple_0) : getColor(R.color.purple_5);
+        int borderColor = getColor(R.color.purple_3);
+        int codeBgColor = isDark ? getColor(R.color.darker_dark_gray) : getColor(R.color.white);
+
+        View upperPanel = findViewById(R.id.upperPanelLayout);
+        if (upperPanel != null) {
+            upperPanel.setBackground(createPanelDrawable(surfaceColor, borderColor, true, false, false, false));
+        }
+
+        View explorerLayout = findViewById(R.id.ExplorerLayout);
+        if (explorerLayout != null) {
+            explorerLayout.setBackground(createPanelDrawable(surfaceColor, borderColor, false, true, false, true));
+        }
+
+        View codeTextLayout = findViewById(R.id.CodeTextLayout);
+        if (codeTextLayout != null) {
+            codeTextLayout.setBackground(createPanelDrawable(codeBgColor, borderColor, false, false, true, false));
+        }
+    }
+
+    private LayerDrawable createPanelDrawable(int fillColor, int borderColor, boolean bottomShadow, boolean rightShadow, boolean topShadow, boolean leftShadow) {
+        ShapeDrawable border = new ShapeDrawable(new RectShape());
+        border.getPaint().setColor(borderColor);
+
+        ShapeDrawable fill = new ShapeDrawable(new RectShape());
+        fill.getPaint().setColor(fillColor);
+
+        Drawable[] layers = new Drawable[]{border, fill};
+        LayerDrawable ld = new LayerDrawable(layers);
+
+        int left = leftShadow ? 3 : 0;
+        int top = topShadow ? 3 : 0;
+        int right = rightShadow ? 3 : 0;
+        int bottom = bottomShadow ? 3 : 0;
+        ld.setLayerInset(1, left, top, right, bottom);
+        return ld;
+    }
+
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putString("currentProjectPath", currentProjectPath);
         outState.putString("currentFileName", currentFileName);
@@ -422,6 +468,8 @@ public class MainActivity extends AppCompatActivity {
         ThemeManager.INSTANCE.initTheme(this);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        updateThemeColors();
 
         fileVM = new ViewModelProvider(this).get(FileVM.class);
 
@@ -514,6 +562,7 @@ public class MainActivity extends AppCompatActivity {
                         String js = "if (window.editor) { monaco.editor.setTheme('" + (isDark ? "vs-dark" : "vs") + "'); }";
                         codeView.evaluateJavascript(js, null);
                     }
+                    updateThemeColors();
                     return true;
                 } else if (id == R.id.action_file_explorer) {
                     Intent intent = new Intent(MainActivity.this, InternalStorageActivity.class);
@@ -526,7 +575,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         currentFileName = null;
-        currentProjectPath = null;
+        currentProjectPath = "";
         FilesController.createProjectsDirectory(this);
 
         if (savedInstanceState != null) {
@@ -540,9 +589,13 @@ public class MainActivity extends AppCompatActivity {
                 if (docFile != null) {
                     DirectoryTreeController.setEnabledForDocumentFile(this, docFile);
                 }
-            } else if (currentProjectPath != null) {
+            } else if (currentProjectPath != null && !currentProjectPath.isEmpty()) {
                 try {
                     setCurrentProjectPath(currentProjectPath);
+                } catch (Exception ignored) {}
+            } else {
+                try {
+                    setCurrentProjectPath("");
                 } catch (Exception ignored) {}
             }
             if (fileUriStr != null) {
@@ -553,6 +606,10 @@ public class MainActivity extends AppCompatActivity {
                     setCurrentFileName(currentFileName);
                 } catch (Exception ignored) {}
             }
+        } else {
+            try {
+                setCurrentProjectPath("");
+            } catch (Exception ignored) {}
         }
     }
 

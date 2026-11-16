@@ -33,7 +33,7 @@
                 android:contentDescription="Menu"
                 android:padding="8dp"
                 android:src="@android:drawable/ic_menu_sort_by_size"
-                app:tint="?attr/colorOnPrimary" />
+                app:tint="?attr/colorPrimary" />
 
             <ImageView
                 android:id="@+id/imageView2"
@@ -44,23 +44,23 @@
                 android:contentDescription="App Logo"
                 app:srcCompat="@drawable/logo" />
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/uncutsans_bold"
+                android:text="@string/app_name"
+                android:textColor="?attr/colorPrimary"
+                android:textSize="18sp" />
+
         </LinearLayout>
 
-        <FrameLayout
-            android:id="@+id/CodeTextLayout"
+        <!-- 2px Divider bar between top bar and bottom parts -->
+        <View
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginStart="356dp"
-            android:layout_marginTop="53dp"
-            android:background="@drawable/code_text_panel_background"
-            tools:ignore="MissingConstraints">
-
-            <WebView
-                android:id="@+id/codeView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-
-        </FrameLayout>
+            android:layout_height="2dp"
+            android:layout_marginTop="56dp"
+            android:background="?attr/colorSecondary"
+            tools:ignore="MissingConstraints" />
 
         <LinearLayout
             android:id="@+id/ExplorerLayout"
@@ -69,8 +69,7 @@
             android:background="@drawable/explorer_panel_background"
             android:gravity="center"
             android:orientation="horizontal"
-            android:layout_marginTop="53dp"
-            app:layout_constraintEnd_toStartOf="@+id/CodeTextLayout"
+            android:layout_marginTop="58dp"
             tools:ignore="MissingConstraints">
 
             <ScrollView
@@ -90,6 +89,31 @@
             </ScrollView>
 
         </LinearLayout>
+
+        <!-- 2px Divider bar between ExplorerLayout and CodeTextLayout -->
+        <View
+            android:layout_width="2dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="300dp"
+            android:layout_marginTop="58dp"
+            android:background="?attr/colorSecondary"
+            tools:ignore="MissingConstraints" />
+
+        <FrameLayout
+            android:id="@+id/CodeTextLayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginStart="302dp"
+            android:layout_marginTop="58dp"
+            android:background="@drawable/code_text_panel_background"
+            tools:ignore="MissingConstraints">
+
+            <WebView
+                android:id="@+id/codeView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+        </FrameLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
