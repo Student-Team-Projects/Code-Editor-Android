@@ -15,6 +15,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.example.codeeditor.MainActivity
 import com.example.codeeditor.R
 import com.example.codeeditor.ui.theme.ThemeManager
 

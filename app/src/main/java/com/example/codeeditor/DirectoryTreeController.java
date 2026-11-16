@@ -6,7 +6,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import com.google.android.material.textfield.TextInputEditText;
+import androidx.documentfile.provider.DocumentFile;
 
 import java.io.File;
 import java.util.HashMap;
@@ -21,7 +21,7 @@ public class DirectoryTreeController {
     }
 
     private static void generateTreeButtons(File currentFile, int depth, MainActivity mainScreen){
-
+        if (currentFile == null) return;
         Button button = new Button(mainScreen);
         String repeated = new String(new char[depth]).replace("\0", "   ");
         button.setText( repeated + currentFile.getName());
@@ -58,10 +58,53 @@ public class DirectoryTreeController {
         scroller.addView(button);
 
         if(currentFile.isDirectory() && Boolean.TRUE.equals(directoryColapsed.get(currentFile.getName()))){
-            for(File item: currentFile.listFiles()){
-                generateTreeButtons(item, depth + 1, mainScreen);
+            File[] files = currentFile.listFiles();
+            if (files != null) {
+                for(File item: files){
+                    generateTreeButtons(item, depth + 1, mainScreen);
+                }
             }
         }
+    }
+
+    public static void generateTreeFromDocumentFile(DocumentFile currentDoc, int depth, MainActivity mainScreen) {
+        if (currentDoc == null) return;
+        Button button = new Button(mainScreen);
+        String repeated = new String(new char[depth]).replace("\0", "   ");
+        button.setText(repeated + (currentDoc.isDirectory() ? "📁 " : "📄 ") + currentDoc.getName());
+        button.setBackground(mainScreen.getDrawable(R.drawable.transperent));
+
+        if (currentDoc.isDirectory()) button.setTextColor(mainScreen.getColor(R.color.cool_blue));
+        else button.setTextColor(mainScreen.getColor(R.color.white));
+
+        button.setGravity(Gravity.LEFT);
+        button.setAllCaps(false);
+        String name = String.valueOf(currentDoc.getName());
+        button.setOnClickListener(v -> {
+            if (currentDoc.isDirectory()) {
+                Boolean value = !Boolean.TRUE.equals(directoryColapsed.get(name));
+                directoryColapsed.put(name, value);
+                refreshDocumentTree(mainScreen, currentDoc);
+            } else {
+                mainScreen.openFileFromUri(currentDoc.getUri());
+            }
+        });
+
+        LinearLayout scroller = mainScreen.findViewById(R.id.ExplorerScrollLayout);
+        scroller.addView(button);
+
+        if (currentDoc.isDirectory() && Boolean.TRUE.equals(directoryColapsed.get(name))) {
+            DocumentFile[] files = currentDoc.listFiles();
+            for (DocumentFile item : files) {
+                generateTreeFromDocumentFile(item, depth + 1, mainScreen);
+            }
+        }
+    }
+
+    private static void refreshDocumentTree(MainActivity mainScreen, DocumentFile rootDoc) {
+        LinearLayout scroller = mainScreen.findViewById(R.id.ExplorerScrollLayout);
+        scroller.removeAllViews();
+        generateTreeFromDocumentFile(rootDoc, 0, mainScreen);
     }
 
     private static void generateExplorerTree(MainActivity mainScreen){
@@ -76,6 +119,13 @@ public class DirectoryTreeController {
         mainScreen.findViewById(R.id.ExplorerLayout).setVisibility(View.VISIBLE);
         directoryColapsed = new HashMap<>();
         generateExplorerTree(mainScreen);
+    }
+
+    public static void setEnabledForDocumentFile(MainActivity mainScreen, DocumentFile docFile) {
+        mainScreen.findViewById(R.id.ExplorerLayout).setEnabled(true);
+        mainScreen.findViewById(R.id.ExplorerLayout).setVisibility(View.VISIBLE);
+        directoryColapsed = new HashMap<>();
+        refreshDocumentTree(mainScreen, docFile);
     }
 
     public static void setDisabled(MainActivity mainScreen){

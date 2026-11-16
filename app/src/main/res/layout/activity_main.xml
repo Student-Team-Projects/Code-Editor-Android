@@ -23,70 +23,26 @@
             tools:layout_editor_absoluteX="0dp"
             tools:layout_editor_absoluteY="0dp">
 
+            <ImageButton
+                android:id="@+id/hamburger_menu"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Menu"
+                android:padding="8dp"
+                android:src="@android:drawable/ic_menu_sort_by_size"
+                app:tint="?attr/colorOnPrimary" />
+
             <ImageView
                 android:id="@+id/imageView2"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="4dp"
                 android:layout_marginEnd="8dp"
                 android:contentDescription="App Logo"
                 app:srcCompat="@drawable/logo" />
-
-            <Button
-                android:id="@+id/file_button"
-                style="?android:attr/borderlessButtonStyle"
-                android:layout_width="65dp"
-                android:layout_height="50dp"
-                android:background="@drawable/button_selector"
-                android:fontFamily="@font/uncutsans_bold"
-                android:paddingHorizontal="0dp"
-                android:text="@string/file"
-                android:textAllCaps="false"
-                android:textColor="?attr/colorOnPrimary"
-                android:textSize="16sp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/git_button"
-                app:layout_constraintHorizontal_bias="1.0"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintVertical_bias="0.0"
-                tools:visibility="visible" />
-
-            <Button
-                android:id="@+id/git_button"
-                style="?android:attr/borderlessButtonStyle"
-                android:layout_width="55dp"
-                android:layout_height="50dp"
-                android:background="@drawable/button_selector"
-                android:fontFamily="@font/uncutsans_bold"
-                android:paddingLeft="5dp"
-                android:paddingRight="5dp"
-                android:text="@string/git"
-                android:textAllCaps="false"
-                android:textColor="?attr/colorOnPrimary"
-                android:textSize="16sp"
-                tools:ignore="MissingConstraints"
-                tools:layout_editor_absoluteX="125dp"
-                tools:layout_editor_absoluteY="0dp"
-                tools:visibility="visible" />
-
-            <Button
-                android:id="@+id/file_explorer"
-                style="?android:attr/borderlessButtonStyle"
-                android:layout_width="75dp"
-                android:layout_height="50dp"
-                android:background="@drawable/button_selector"
-                android:fontFamily="@font/uncutsans_bold"
-                android:paddingLeft="5dp"
-                android:paddingRight="5dp"
-                android:text="@string/file_explorer"
-                android:textAllCaps="false"
-                android:textColor="?attr/colorOnPrimary"
-                android:textSize="12sp"
-                tools:ignore="MissingConstraints"
-                tools:layout_editor_absoluteX="125dp"
-                tools:layout_editor_absoluteY="0dp"
-                tools:visibility="visible" />
 
         </LinearLayout>
 

@@ -1,6 +1,9 @@
 package com.example.codeeditor;
 
 import android.annotation.SuppressLint;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
@@ -14,6 +17,7 @@ import android.webkit.WebViewClient;
 
 public class CodeEditorController {
 
+    @SuppressWarnings("deprecation")
     @SuppressLint("SetJavaScriptEnabled")
     public static WebView setupCodeEditor(MainActivity mainScreen) {
         WebView codeEditor = mainScreen.findViewById(R.id.codeView);
@@ -38,10 +42,10 @@ public class CodeEditorController {
 
         codeEditor.setWebViewClient(new WebViewClient());
 
-        // Tworzymy most Java-JavaScript. Metody w EditorBridge mogą być wywoływane z HTML-a.
+        // Java-JavaScript bridge. Methods in EditorBridge can be called from HTML/JS.
         codeEditor.addJavascriptInterface(new EditorBridge(mainScreen), "AndroidBridge");
 
-        // Wczytanie lokalnego pliku z katalogu assets
+        // Load local HTML from assets
         codeEditor.loadUrl("file:///android_asset/index.html");
 
         return codeEditor;
@@ -53,7 +57,7 @@ public class CodeEditorController {
             codePanel.setEnabled(true);
             codePanel.setVisibility(View.VISIBLE);
         }
-        setCode("// Otwórz plik z menu File -> Open File lub utwórz nowy", mainScreen);
+        setCode("// Open a file from menu File -> Open File or create new", mainScreen);
     }
 
     public static void EnableCodeEditor(MainActivity mainScreen) {
@@ -127,6 +131,35 @@ public class CodeEditorController {
 
         @JavascriptInterface
         public void onTextChanged(String currentText) {
+        }
+
+        @JavascriptInterface
+        public String getClipboardText() {
+            try {
+                ClipboardManager clipboard = (ClipboardManager) mainScreen.getSystemService(Context.CLIPBOARD_SERVICE);
+                if (clipboard != null && clipboard.hasPrimaryClip() && clipboard.getPrimaryClip() != null && clipboard.getPrimaryClip().getItemCount() > 0) {
+                    CharSequence text = clipboard.getPrimaryClip().getItemAt(0).getText();
+                    return text != null ? text.toString() : "";
+                }
+            } catch (Exception e) {
+                Log.e("EditorBridge", "Error reading clipboard", e);
+            }
+            return "";
+        }
+
+        @JavascriptInterface
+        public void setClipboardText(String text) {
+            mainScreen.runOnUiThread(() -> {
+                try {
+                    ClipboardManager clipboard = (ClipboardManager) mainScreen.getSystemService(Context.CLIPBOARD_SERVICE);
+                    if (clipboard != null) {
+                        ClipData clip = ClipData.newPlainText("Copied Text", text);
+                        clipboard.setPrimaryClip(clip);
+                    }
+                } catch (Exception e) {
+                    Log.e("EditorBridge", "Error writing clipboard", e);
+                }
+            });
         }
     }
 }
