@@ -147,7 +147,7 @@
             android:background="@drawable/code_text_panel_background"
             tools:ignore="MissingConstraints">
 
-            <WebView
+            <com.example.codeeditor.CodeWebView
                 android:id="@+id/codeView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
