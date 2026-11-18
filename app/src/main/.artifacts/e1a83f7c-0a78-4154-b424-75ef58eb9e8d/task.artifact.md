@@ -1,0 +1,3 @@
+- [/] Implement double-click detection for files in DirectoryTreeController.java
+- [ ] Verify build with Gradle
+- [ ] Create walkthrough artifact

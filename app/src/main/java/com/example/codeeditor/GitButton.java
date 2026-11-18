@@ -12,28 +12,29 @@ import androidx.core.view.MenuCompat;
 public class GitButton {
 
     public static Button getGitButton(MainActivity mainScreen){
-        Button gitButton = mainScreen.findViewById(R.id.git_button);
-
-        gitButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Context wrapper = new ContextThemeWrapper(mainScreen, R.style.CustomPopupMenu);
-                PopupMenu popup = new PopupMenu(wrapper, v);
-                popup.getMenuInflater().inflate(R.menu.menu_git, popup.getMenu());
-                MenuCompat.setGroupDividerEnabled(popup.getMenu(), true);
-                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                    public boolean onMenuItemClick(MenuItem item) {
-                        return onOptionsItemSelected(item, mainScreen);
-                    }
-                });
-                popup.show();
-            }
-        });
-
-        return gitButton;
+        View view = mainScreen.findViewById(R.id.hamburger_menu);
+        if (view instanceof Button) {
+            Button gitButton = (Button) view;
+            gitButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Context wrapper = new ContextThemeWrapper(mainScreen, R.style.CustomPopupMenu);
+                    PopupMenu popup = new PopupMenu(wrapper, v);
+                    popup.getMenuInflater().inflate(R.menu.menu_git, popup.getMenu());
+                    MenuCompat.setGroupDividerEnabled(popup.getMenu(), true);
+                    popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                        public boolean onMenuItemClick(MenuItem item) {
+                            return onOptionsItemSelected(item, mainScreen);
+                        }
+                    });
+                    popup.show();
+                }
+            });
+            return gitButton;
+        }
+        return null;
     }
 
-    // ИСПРАВЛЕННАЯ ЧАСТЬ: switch заменен на if-else
     static public boolean onOptionsItemSelected(MenuItem item, MainActivity mainScreen) {
         int id = item.getItemId();
 

@@ -4,17 +4,62 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        html, body, #container {
+        html, body {
             width: 100%;
             height: 100%;
             margin: 0;
             padding: 0;
             overflow: hidden;
             background-color: #1e1e1e;
+            display: flex;
+            flex-direction: column;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        #toolbar {
+            height: 36px;
+            background-color: #2d2d2d;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            border-bottom: 1px solid #3c3c3c;
+            user-select: none;
+            -webkit-user-select: none;
+            box-sizing: border-box;
+        }
+        .btn {
+            background: transparent;
+            border: none;
+            color: #cccccc;
+            font-size: 13px;
+            padding: 6px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            outline: none;
+        }
+        .btn:hover, .btn:active {
+            background-color: #3e3e42;
+            color: #ffffff;
+        }
+        .btn-suggest {
+            color: #4fc3f7;
+            font-weight: bold;
+        }
+        #container {
+            flex: 1;
+            width: 100%;
+            overflow: hidden;
         }
     </style>
 </head>
 <body>
+<div id="toolbar">
+    <button class="btn" onclick="editorUndo()">Undo</button>
+    <button class="btn" onclick="editorRedo()">Redo</button>
+    <button class="btn" onclick="editorSelectAll()">Select All</button>
+    <button class="btn" onclick="editorCopy()">Copy</button>
+    <button class="btn" onclick="editorPasteFromClipboard()">Paste</button>
+    <button class="btn btn-suggest" onclick="editorTriggerSuggest()">Suggest</button>
+</div>
 <div id="container"></div>
 
 <script>
@@ -105,6 +150,11 @@
                 window.editor.focus();
             }
         });
+        document.getElementById('container').addEventListener('touchstart', function() {
+            if (window.editor) {
+                window.editor.focus();
+            }
+        });
 
         window.addEventListener('resize', function() {
             if (window.editor) {
@@ -118,27 +168,19 @@
         }, 300);
     }
 
-    // Hybrid Loader: loads online CDN when connected, or falls back to local assets
-    function loadMonaco(useCDN) {
-        const vsPath = useCDN
-            ? 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs'
-            : 'monaco/min/vs';
+    function loadMonaco() {
+        const vsPath = 'monaco/min/vs';
 
-        if (!useCDN) {
-            window.MonacoEnvironment = {
-                getWorkerUrl: function () {
-                    return 'data:text/javascript;charset=utf-8,';
-                }
-            };
-        }
+        window.MonacoEnvironment = {
+            getWorkerUrl: function () {
+                return 'data:text/javascript;charset=utf-8,';
+            }
+        };
 
         const loaderScript = document.createElement('script');
         loaderScript.src = vsPath + '/loader.js';
         loaderScript.onerror = function() {
-            if (useCDN) {
-                console.log("CDN failed, falling back to local Monaco...");
-                loadMonaco(false);
-            }
+            console.log("Failed to load local Monaco loader.js");
         };
         loaderScript.onload = function() {
             require.config({ paths: { 'vs': vsPath }});
@@ -149,12 +191,7 @@
         document.head.appendChild(loaderScript);
     }
 
-    // Try online CDN first, fallback to local assets offline
-    if (navigator.onLine) {
-        loadMonaco(true);
-    } else {
-        loadMonaco(false);
-    }
+    loadMonaco();
 
     function base64ToUtf8(base64) {
         try {
@@ -167,11 +204,10 @@
         }
     }
 
-    function setEditorValueFromAndroid(base64Code, extension) {
-        const decoded = base64ToUtf8(base64Code);
+    function setEditorValueFromAndroid(codeText, extension) {
         if (window.editor) {
-            if (window.editor.getValue() !== decoded) {
-                window.editor.setValue(decoded);
+            if (window.editor.getValue() !== codeText) {
+                window.editor.setValue(codeText);
             }
             if (extension) {
                 const lang = getLanguageByExtension(extension);
@@ -179,7 +215,7 @@
             }
             window.editor.layout();
         } else {
-            pendingCode = decoded;
+            pendingCode = codeText;
             pendingExtension = extension || "";
         }
     }
@@ -195,8 +231,8 @@
         if (window.editor) {
             const selection = window.editor.getSelection();
             const text = window.editor.getModel().getValueInRange(selection);
-            if (window.AndroidBridge && window.AndroidBridge.onCopyRequested) {
-                window.AndroidBridge.onCopyRequested(text);
+            if (window.AndroidBridge && window.AndroidBridge.setClipboardText) {
+                window.AndroidBridge.setClipboardText(text);
             }
         }
     }
@@ -208,6 +244,18 @@
             const op = { identifier: id, range: selection, text: text, forceMoveMarkers: true };
             window.editor.executeEdits("my-source", [op]);
             window.editor.focus();
+        }
+    }
+    function editorPasteFromClipboard() {
+        if (window.editor && window.AndroidBridge && window.AndroidBridge.getClipboardText) {
+            const text = window.AndroidBridge.getClipboardText();
+            if (text) {
+                const selection = window.editor.getSelection();
+                const id = { major: 1, minor: 1 };
+                const op = { identifier: id, range: selection, text: text, forceMoveMarkers: true };
+                window.editor.executeEdits("my-source", [op]);
+                window.editor.focus();
+            }
         }
     }
     function editorUndo() {

@@ -8,7 +8,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.example.codeeditor.activities.MainActivity
+import com.example.codeeditor.MainActivity
 import com.example.codeeditor.constants.ButtonRowPadding
 import com.example.codeeditor.constants.LanguageMap
 

@@ -23,88 +23,66 @@
             tools:layout_editor_absoluteX="0dp"
             tools:layout_editor_absoluteY="0dp">
 
+            <ImageButton
+                android:id="@+id/hamburger_menu"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Menu"
+                android:padding="8dp"
+                android:src="@android:drawable/ic_menu_sort_by_size"
+                app:tint="?attr/colorPrimary" />
+
             <ImageView
                 android:id="@+id/imageView2"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="4dp"
                 android:layout_marginEnd="8dp"
                 android:contentDescription="App Logo"
                 app:srcCompat="@drawable/logo" />
 
-            <Button
-                android:id="@+id/file_button"
-                style="?android:attr/borderlessButtonStyle"
-                android:layout_width="65dp"
-                android:layout_height="50dp"
-                android:background="@drawable/button_selector"
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:fontFamily="@font/uncutsans_bold"
-                android:paddingHorizontal="0dp"
-                android:text="@string/file"
-                android:textAllCaps="false"
-                android:textColor="?attr/colorOnPrimary"
-                android:textSize="16sp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/git_button"
-                app:layout_constraintHorizontal_bias="1.0"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintVertical_bias="0.0"
-                tools:visibility="visible" />
-
-            <Button
-                android:id="@+id/git_button"
-                style="?android:attr/borderlessButtonStyle"
-                android:layout_width="55dp"
-                android:layout_height="50dp"
-                android:background="@drawable/button_selector"
-                android:fontFamily="@font/uncutsans_bold"
-                android:paddingLeft="5dp"
-                android:paddingRight="5dp"
-                android:text="@string/git"
-                android:textAllCaps="false"
-                android:textColor="?attr/colorOnPrimary"
-                android:textSize="16sp"
-                tools:ignore="MissingConstraints"
-                tools:layout_editor_absoluteX="125dp"
-                tools:layout_editor_absoluteY="0dp"
-                tools:visibility="visible" />
-
-            <Button
-                android:id="@+id/file_explorer"
-                style="?android:attr/borderlessButtonStyle"
-                android:layout_width="75dp"
-                android:layout_height="50dp"
-                android:background="@drawable/button_selector"
-                android:fontFamily="@font/uncutsans_bold"
-                android:paddingLeft="5dp"
-                android:paddingRight="5dp"
-                android:text="@string/file_explorer"
-                android:textAllCaps="false"
-                android:textColor="?attr/colorOnPrimary"
-                android:textSize="12sp"
-                tools:ignore="MissingConstraints"
-                tools:layout_editor_absoluteX="125dp"
-                tools:layout_editor_absoluteY="0dp"
-                tools:visibility="visible" />
+                android:text="@string/app_name"
+                android:textColor="?attr/colorPrimary"
+                android:textSize="18sp" />
 
         </LinearLayout>
 
-        <FrameLayout
-            android:id="@+id/CodeTextLayout"
+        <!-- 2px Divider bar between top bar and bottom parts -->
+        <View
             android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:layout_marginTop="56dp"
+            android:background="?attr/colorSecondary"
+            tools:ignore="MissingConstraints" />
+
+        <!-- 10% width Left Sidebar Panel -->
+        <LinearLayout
+            android:id="@+id/LeftSidebarLayout"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_marginStart="356dp"
-            android:layout_marginTop="53dp"
-            android:background="@drawable/code_text_panel_background"
+            android:layout_marginTop="58dp"
+            android:background="?attr/colorSurface"
+            android:orientation="vertical"
+            app:layout_constraintWidth_percent="0.10"
+            app:layout_constraintStart_toStartOf="parent"
             tools:ignore="MissingConstraints">
+        </LinearLayout>
 
-            <WebView
-                android:id="@+id/codeView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-
-        </FrameLayout>
+        <!-- 2px Divider bar between LeftSidebarLayout and ExplorerLayout -->
+        <View
+            android:layout_width="2dp"
+            android:layout_height="match_parent"
+            android:layout_marginTop="58dp"
+            app:layout_constraintStart_toEndOf="@+id/LeftSidebarLayout"
+            android:background="?attr/colorSecondary"
+            tools:ignore="MissingConstraints" />
 
         <LinearLayout
             android:id="@+id/ExplorerLayout"
@@ -113,8 +91,9 @@
             android:background="@drawable/explorer_panel_background"
             android:gravity="center"
             android:orientation="horizontal"
-            android:layout_marginTop="53dp"
-            app:layout_constraintEnd_toStartOf="@+id/CodeTextLayout"
+            android:layout_marginTop="58dp"
+            app:layout_constraintStart_toEndOf="@+id/LeftSidebarLayout"
+            android:layout_marginStart="2dp"
             tools:ignore="MissingConstraints">
 
             <ScrollView
@@ -135,14 +114,40 @@
 
         </LinearLayout>
 
+        <!-- 2px Divider bar between ExplorerLayout and CodeTextLayout -->
+        <View
+            android:layout_width="2dp"
+            android:layout_height="match_parent"
+            android:layout_marginTop="58dp"
+            app:layout_constraintStart_toEndOf="@+id/ExplorerLayout"
+            android:background="?attr/colorSecondary"
+            tools:ignore="MissingConstraints" />
+
+        <FrameLayout
+            android:id="@+id/CodeTextLayout"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginTop="58dp"
+            app:layout_constraintStart_toEndOf="@+id/ExplorerLayout"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="2dp"
+            android:background="@drawable/code_text_panel_background"
+            tools:ignore="MissingConstraints">
+
+            <WebView
+                android:id="@+id/codeView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+        </FrameLayout>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <FrameLayout
         android:id="@+id/NewFileLayout"
         android:layout_width="500dp"
-        android:layout_height="200dp"
-        android:layout_marginTop="200dp"
-        android:layout_marginStart="400dp"
+        android:layout_height="230dp"
+        android:layout_gravity="center"
         android:background="@drawable/text_enter_background">
 
         <TextView
@@ -165,11 +170,19 @@
             android:layout_marginTop="15dp"
             app:srcCompat="@android:drawable/ic_menu_close_clear_cancel" />
 
+        <Spinner
+            android:id="@+id/NewFileDirectorySpinner"
+            android:layout_width="400dp"
+            android:layout_height="45dp"
+            android:layout_marginStart="50dp"
+            android:layout_marginTop="50dp"
+            android:background="@drawable/text_enter_field_background" />
+
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/NewFileEnterBackground"
             android:layout_width="400dp"
             android:layout_marginStart="50dp"
-            android:layout_marginTop="55dp"
+            android:layout_marginTop="100dp"
             android:layout_height="60dp"
             android:background="@drawable/text_enter_field_background"
             android:gravity="center_horizontal|center_vertical">
@@ -184,10 +197,10 @@
 
         <TextView
             android:id="@+id/NewFileError"
-            android:layout_width="250dp"
-            android:layout_height="50dp"
+            android:layout_width="230dp"
+            android:layout_height="40dp"
             android:layout_marginStart="50dp"
-            android:layout_marginTop="130dp"
+            android:layout_marginTop="170dp"
             android:fontFamily="@font/uncutsans_regularitalic"
             android:textColor="@color/error_red"
             android:gravity="center"
@@ -196,9 +209,9 @@
         <Button
             android:id="@+id/NewFileButtonSubmit"
             android:layout_width="100dp"
-            android:layout_height="50dp"
+            android:layout_height="45dp"
             android:layout_marginStart="350dp"
-            android:layout_marginTop="130dp"
+            android:layout_marginTop="170dp"
             android:textColor="?attr/colorOnPrimary"
             android:text="Create"
             android:background="@drawable/open_button_background" />

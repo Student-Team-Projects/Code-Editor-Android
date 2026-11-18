@@ -15,6 +15,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.example.codeeditor.MainActivity
 import com.example.codeeditor.R
 import com.example.codeeditor.ui.theme.ThemeManager
 
@@ -38,18 +39,20 @@ class StartActivity : AppCompatActivity() {
             adjustSizes()
         }
 
-        val navigateToMain = {
-            val intent = Intent(this, MainActivity::class.java)
+        findViewById<Button>(R.id.continueButton)?.setOnClickListener {
+            val intent = Intent(this, MainActivity::class.java).apply {
+                putExtra("resume_session", true)
+            }
             startActivity(intent)
             finish()
         }
 
-        findViewById<Button>(R.id.continueButton)?.setOnClickListener {
-            navigateToMain()
-        }
-
         findViewById<Button>(R.id.newButton)?.setOnClickListener {
-            navigateToMain()
+            val intent = Intent(this, MainActivity::class.java).apply {
+                putExtra("open_folder_picker", true)
+            }
+            startActivity(intent)
+            finish()
         }
     }
 

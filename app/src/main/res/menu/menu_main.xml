@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <group android:id="@+id/group_file">
+        <item
+            android:id="@+id/action_new_file"
+            android:title="New File" />
+        <item
+            android:id="@+id/action_open_file"
+            android:title="Open File" />
+        <item
+            android:id="@+id/action_open_project"
+            android:title="Open Folder" />
+        <item
+            android:id="@+id/action_save_file"
+            android:title="Save File" />
+        <item
+            android:id="@+id/action_close_file"
+            android:title="Close File" />
+        <item
+            android:id="@+id/action_close_project"
+            android:title="Close Folder" />
+    </group>
+
+    <item
+        android:id="@+id/menu_git"
+        android:title="Git">
+        <menu>
+            <item
+                android:id="@+id/action_git_init"
+                android:title="Initialize Repository" />
+            <item
+                android:id="@+id/action_git_status"
+                android:title="Git Status" />
+            <item
+                android:id="@+id/action_git_add_all"
+                android:title="Add All Changes" />
+            <item
+                android:id="@+id/action_git_commit"
+                android:title="Commit" />
+            <item
+                android:id="@+id/action_git_push"
+                android:title="Push" />
+            <item
+                android:id="@+id/action_git_add_remote"
+                android:title="Add Remote" />
+            <item
+                android:id="@+id/action_clone"
+                android:title="Clone Repository" />
+        </menu>
+    </item>
+
+    <item android:title="Settings">
+        <menu>
+            <item
+                android:id="@+id/action_toggle_theme"
+                android:title="Switch Theme" />
+            <item
+                android:id="@+id/action_file_explorer"
+                android:title="File Explorer" />
+        </menu>
+    </item>
+
+</menu>

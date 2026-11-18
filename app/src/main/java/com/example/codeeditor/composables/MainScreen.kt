@@ -57,7 +57,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.runtime.mutableStateListOf
-import com.example.codeeditor.activities.MainActivity
+import com.example.codeeditor.MainActivity
 import com.example.codeeditor.activities.TermuxTestActivity
 import com.example.codeeditor.constants.*
 import com.example.codeeditor.viewmodels.CodeVM

@@ -36,7 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.example.codeeditor.activities.MainActivity
+import com.example.codeeditor.MainActivity
 import com.example.codeeditor.constants.ButtonRowPadding
 import com.example.codeeditor.constants.LanguageMap
 import com.example.codeeditor.model.FileLogic
