@@ -12,6 +12,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 public class FilesController {
@@ -66,18 +67,20 @@ public class FilesController {
         }
     }
 
-    public static void saveFile(String fileName, String content, MainActivity mainScreen) {
+    public static boolean saveFile(String fileName, String content, MainActivity mainScreen) {
         File directory = FilesController.getDirectory(fileName, mainScreen);
         String realFileName = FilesController.getFileName(fileName);
         File file = new File(directory, realFileName);
         try {
             FileOutputStream fileOutputStream = new FileOutputStream(file);
-            fileOutputStream.write(content.getBytes());
+            fileOutputStream.write(content.getBytes(StandardCharsets.UTF_8));
             fileOutputStream.close();
             Toast.makeText(mainScreen, "File saved", Toast.LENGTH_SHORT).show();
+            return true;
         } catch (IOException e) {
             e.printStackTrace();
             Toast.makeText(mainScreen, "Error saving file", Toast.LENGTH_SHORT).show();
+            return false;
         }
     }
 
