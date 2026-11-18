@@ -177,8 +177,10 @@
             e.preventDefault();
         });
 
+        // Touch is left to Monaco (tap = cursor, drag = scroll): a finger drag here selected the
+        // text scrolling under it, and the next keystroke replaced that selection.
         containerEl.addEventListener('pointerdown', function(e) {
-            if (e.button === 0 || e.pointerType === 'mouse' || e.pointerType === 'pen' || e.pointerType === 'touch') {
+            if (e.pointerType !== 'touch') {
                 isMouseDown = true;
                 const currentTime = Date.now();
                 const timeDiff = currentTime - lastClickTime;
