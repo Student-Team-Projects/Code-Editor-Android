@@ -58,7 +58,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.runtime.mutableStateListOf
 import com.example.codeeditor.MainActivity
-import com.example.codeeditor.activities.TermuxTestActivity
+import com.example.codeeditor.activities.TermuxConnectionActivity
 import com.example.codeeditor.constants.*
 import com.example.codeeditor.viewmodels.CodeVM
 import com.example.codeeditor.viewmodels.DirectoryEntry
@@ -682,7 +682,7 @@ fun ButtonRow(codeVM: CodeVM, currentColorMode: String, currentLanguage: String,
                     onClick = {
                         showMainMenu = false
                         showGitSubmenu = false
-                        mainActivity.startActivity(Intent(mainActivity, TermuxTestActivity::class.java))
+                        mainActivity.startActivity(Intent(mainActivity, TermuxConnectionActivity::class.java))
                     }
                 )
                 

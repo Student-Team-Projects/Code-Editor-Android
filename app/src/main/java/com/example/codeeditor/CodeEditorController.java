@@ -64,7 +64,8 @@ public class CodeEditorController {
         WebView codePanel = mainScreen.findViewById(R.id.codeView);
         if (codePanel != null) {
             codePanel.setEnabled(true);
-            codePanel.setVisibility(View.VISIBLE);
+            // Closing a file while the terminal is shown shouldn't bring the editor back.
+            if (!mainScreen.isTerminalShown()) codePanel.setVisibility(View.VISIBLE);
         }
         setCode("// Open a file from menu File -> Open File or create new", mainScreen);
     }
@@ -73,7 +74,8 @@ public class CodeEditorController {
         WebView codePanel = mainScreen.findViewById(R.id.codeView);
         if (codePanel != null) {
             codePanel.setEnabled(true);
-            codePanel.setVisibility(View.VISIBLE);
+            // Opening a file switches back from the terminal.
+            mainScreen.showEditor();
             codePanel.requestFocus();
         }
     }

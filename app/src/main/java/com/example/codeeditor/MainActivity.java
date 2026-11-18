@@ -20,9 +20,11 @@ import android.view.ContextThemeWrapper;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.MimeTypeMap;
 import android.webkit.WebView;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
@@ -37,7 +39,10 @@ import androidx.core.app.ActivityCompat;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.codeeditor.activities.TermuxConnectionActivity;
+import com.example.codeeditor.composables.TerminalPanelHost;
 import com.example.codeeditor.model.FileLogic;
+import com.example.codeeditor.termux.ssh.SshProfile;
 import com.example.codeeditor.ui.theme.ThemeManager;
 import com.example.codeeditor.viewmodels.FileVM;
 
@@ -55,6 +60,9 @@ public class MainActivity extends AppCompatActivity {
 
     private ImageButton hamburgerMenu;
     private WebView codeView;
+    private ImageButton terminalToggle;
+    private View terminalView; // created on first show
+    private boolean terminalShown = false;
     private HashMap<Object, Boolean> canBeEnabled;
     private String currentFileName;
     private String currentProjectPath;
@@ -243,6 +251,7 @@ public class MainActivity extends AppCompatActivity {
                 currentProjectPath = uri.toString();
                 DirectoryTreeController.setEnabledForDocumentFile(this, docFile);
                 saveSessionToPrefs();
+                updateTerminalProject();
             }
         } catch (Exception e) {
             Log.e("MainActivity", "Error opening directory: " + uri, e);
@@ -560,6 +569,7 @@ public class MainActivity extends AppCompatActivity {
         super.onSaveInstanceState(outState);
         outState.putString("currentProjectPath", currentProjectPath);
         outState.putString("currentFileName", currentFileName);
+        outState.putBoolean("terminalShown", terminalShown);
         if (currentDirectoryUri != null) {
             outState.putString("currentDirectoryUri", currentDirectoryUri.toString());
         }
@@ -582,6 +592,13 @@ public class MainActivity extends AppCompatActivity {
         createRequiredFolders();
 
         codeView = CodeEditorController.setupCodeEditor(this);
+
+        SshProfile.installAsDefault(this);
+        terminalToggle = findViewById(R.id.terminal_toggle);
+        terminalToggle.setOnClickListener(v -> {
+            if (terminalShown) showEditor();
+            else showTerminal();
+        });
 
         CodeEditorController.DisableCodeEditor(this);
 
@@ -682,6 +699,9 @@ public class MainActivity extends AppCompatActivity {
                     }
                     updateThemeColors();
                     return true;
+                } else if (id == R.id.action_termux_connection) {
+                    openTermuxConnection();
+                    return true;
                 } else if (id == R.id.action_file_explorer) {
                     Intent intent = new Intent(MainActivity.this, InternalStorageActivity.class);
                     startActivity(intent);
@@ -753,6 +773,54 @@ public class MainActivity extends AppCompatActivity {
                 } catch (Exception ignored) {}
             }
         }
+
+        updateTerminalProject();
+        if (savedInstanceState != null && savedInstanceState.getBoolean("terminalShown")) {
+            showTerminal();
+        }
+    }
+
+    public boolean isTerminalShown() {
+        return terminalShown;
+    }
+
+    /** Shows the terminal in place of the editor. The editor is only hidden, so it keeps its state. */
+    public void showTerminal() {
+        if (terminalView == null) {
+            terminalView = TerminalPanelHost.create(this, this::openTermuxConnection);
+            FrameLayout container = findViewById(R.id.CodeTextLayout);
+            container.addView(terminalView, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        }
+        codeView.setVisibility(View.GONE);
+        terminalView.setVisibility(View.VISIBLE);
+        terminalShown = true;
+        terminalToggle.setImageResource(R.drawable.ic_code);
+        terminalToggle.setContentDescription("Show editor");
+    }
+
+    public void showEditor() {
+        if (terminalView != null && terminalView.getVisibility() == View.VISIBLE) {
+            InputMethodManager imm = getSystemService(InputMethodManager.class);
+            if (imm != null) imm.hideSoftInputFromWindow(terminalView.getWindowToken(), 0);
+            terminalView.clearFocus();
+            terminalView.setVisibility(View.GONE);
+        }
+        codeView.setVisibility(View.VISIBLE);
+        terminalShown = false;
+        terminalToggle.setImageResource(R.drawable.ic_terminal);
+        terminalToggle.setContentDescription("Show terminal");
+    }
+
+    public void openTermuxConnection() {
+        startActivity(new Intent(this, TermuxConnectionActivity.class));
+    }
+
+    /** Only a folder from the system picker has a path Termux could open. */
+    private void updateTerminalProject() {
+        boolean pickedFolder = currentDirectoryUri != null
+                && currentDirectoryUri.toString().equals(currentProjectPath);
+        TerminalPanelHost.setProjectDirectory(this, pickedFolder ? currentDirectoryUri : null);
     }
 
     protected void disableMainLayout(){
@@ -850,6 +918,7 @@ public class MainActivity extends AppCompatActivity {
         currentProjectPath = projectPath;
         DirectoryTreeController.setEnabled(this);
         saveSessionToPrefs();
+        updateTerminalProject();
     }
 
     public String getCurrentFileName(){

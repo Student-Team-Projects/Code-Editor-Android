@@ -9,7 +9,8 @@ import kotlinx.coroutines.flow.StateFlow
     - Cancelling the coroutine that runs [exec] kills the remote process.
     - A backend that can't tell stdout from stderr reports everything as [OutputStream.STDOUT].
     - A backend that can't report an exit code returns `exitCode = null`.
-    - A `null` cwd means `$HOME`; the timeout is enforced by the backend.
+    - A `null` cwd means `$HOME`; the timeout is enforced by the backend, and a `null` timeout means none.
+    - A backend reports a failed [connect] in [state] as [ConnectionState.Failed] before throwing.
     - The backend picks its own threads, so callers may call from the main dispatcher.
       [OutputSink] may be called from any thread.
     - Every failure is a [TermuxException].
@@ -29,7 +30,7 @@ sealed class ConnectionState {
     data class Failed(val error: TermuxException) : ConnectionState()
 }
 
-data class ExecRequest(val command: String, val cwd: String? = null, val timeoutSec: Long = 60)
+data class ExecRequest(val command: String, val cwd: String? = null, val timeoutSec: Long? = 60)
 
 enum class OutputStream { STDOUT, STDERR }
 

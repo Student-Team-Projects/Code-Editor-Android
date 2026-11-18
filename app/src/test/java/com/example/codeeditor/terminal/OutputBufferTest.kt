@@ -1,6 +1,6 @@
-package com.example.codeeditor.viewmodels
+package com.example.codeeditor.terminal
 
-import com.example.codeeditor.termux.OutputStream
+import com.example.codeeditor.viewmodels.TerminalVM
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -10,17 +10,17 @@ class OutputBufferTest {
     private fun OutputBuffer.text() = snapshot().joinToString("") { it.text }
 
     @Test
-    fun mergesAdjacentChunksOfTheSameStream() {
+    fun mergesAdjacentChunksOfTheSameStyle() {
         val b = OutputBuffer(100)
-        b.append(OutputStream.STDOUT, "a")
-        b.append(OutputStream.STDOUT, "b")
-        b.append(OutputStream.STDERR, "c")
-        b.append(OutputStream.STDOUT, "d")
+        b.append(ChunkStyle.OUTPUT, "a")
+        b.append(ChunkStyle.OUTPUT, "b")
+        b.append(ChunkStyle.ERROR, "c")
+        b.append(ChunkStyle.OUTPUT, "d")
         assertEquals(
             listOf(
-                OutputChunk(OutputStream.STDOUT, "ab"),
-                OutputChunk(OutputStream.STDERR, "c"),
-                OutputChunk(OutputStream.STDOUT, "d"),
+                OutputChunk(ChunkStyle.OUTPUT, "ab"),
+                OutputChunk(ChunkStyle.ERROR, "c"),
+                OutputChunk(ChunkStyle.OUTPUT, "d"),
             ),
             b.snapshot()
         )
@@ -30,21 +30,21 @@ class OutputBufferTest {
     @Test
     fun keepsOnlyTheMostRecentCharacters() {
         val b = OutputBuffer(10)
-        b.append(OutputStream.STDOUT, "0123456")
-        b.append(OutputStream.STDERR, "789")
-        b.append(OutputStream.STDOUT, "abc")
+        b.append(ChunkStyle.OUTPUT, "0123456")
+        b.append(ChunkStyle.ERROR, "789")
+        b.append(ChunkStyle.OUTPUT, "abc")
         assertEquals("3456789abc", b.text())
-        assertEquals(OutputStream.STDOUT, b.snapshot().first().stream)
+        assertEquals(ChunkStyle.OUTPUT, b.snapshot().first().style)
         assertTrue(b.truncated)
     }
 
     @Test
     fun capHoldsUnderSustainedOutput() {
-        val max = TermuxTestVM.MAX_OUTPUT_CHARS
+        val max = TerminalVM.MAX_OUTPUT_CHARS
         val b = OutputBuffer(max)
         val line = "y\n".repeat(4096)
-        repeat(1000) { b.append(OutputStream.STDOUT, line) }
-        b.append(OutputStream.STDOUT, "END")
+        repeat(1000) { b.append(ChunkStyle.OUTPUT, line) }
+        b.append(ChunkStyle.OUTPUT, "END")
         val text = b.text()
         assertEquals(max, text.length)
         assertTrue(text.endsWith("END"))
@@ -53,7 +53,7 @@ class OutputBufferTest {
     @Test
     fun clearResets() {
         val b = OutputBuffer(3)
-        b.append(OutputStream.STDOUT, "abcdef")
+        b.append(ChunkStyle.OUTPUT, "abcdef")
         b.clear()
         assertEquals(emptyList<OutputChunk>(), b.snapshot())
         assertFalse(b.truncated)

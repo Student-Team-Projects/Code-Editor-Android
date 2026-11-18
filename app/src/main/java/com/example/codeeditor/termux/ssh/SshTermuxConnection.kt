@@ -25,6 +25,11 @@ import net.schmizz.sshj.connection.channel.direct.Signal
 import net.schmizz.sshj.transport.TransportException
 import net.schmizz.sshj.common.DisconnectReason
 import net.schmizz.sshj.userauth.UserAuthException
+import net.schmizz.sshj.userauth.keyprovider.KeyPairWrapper
+import net.schmizz.sshj.userauth.method.AuthMethod
+import net.schmizz.sshj.userauth.method.AuthPassword
+import net.schmizz.sshj.userauth.method.AuthPublickey
+import net.schmizz.sshj.userauth.password.PasswordUtils
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import java.io.InputStream
 import java.io.InputStreamReader
@@ -57,7 +62,7 @@ class SshTermuxConnection(
             ssh.connectTimeout = CONNECT_TIMEOUT_MS
             ssh.addHostKeyVerifier(verifier)
             ssh.connect(config.host, config.port)
-            ssh.authPassword(config.username, config.password)
+            ssh.auth(config.username, authMethods())
         } catch (e: Exception) {
             runCatching { ssh.disconnect() }
             val error = toTermuxException(e, verifier.mismatch)
@@ -87,14 +92,20 @@ class SshTermuxConnection(
             try {
                 val cmd = session.exec(withCwd(request.command, request.cwd))
                 command = cmd
-                val finished = withTimeoutOrNull(request.timeoutSec * 1000) {
+                suspend fun runToEnd() {
                     coroutineScope {
                         launch { pump(cmd.inputStream, OutputStream.STDOUT, output) }
                         launch { pump(cmd.errorStream, OutputStream.STDERR, output) }
                     }
                     runInterruptible { cmd.join() }
+                }
+                val timeoutSec = request.timeoutSec
+                val finished = if (timeoutSec == null) {
+                    runToEnd()
                     true
-                } ?: false
+                } else {
+                    withTimeoutOrNull(timeoutSec * 1000) { runToEnd(); true } ?: false
+                }
                 if (finished) {
                     ExecResult(cmd.exitStatus, cmd.exitSignal?.name, timedOut = false)
                 } else {
@@ -114,6 +125,16 @@ class SshTermuxConnection(
     override suspend fun disconnect() = withContext(Dispatchers.IO) {
         closeClient()
         _state.value = ConnectionState.Disconnected
+    }
+
+    private fun authMethods(): List<AuthMethod> {
+        val methods = mutableListOf<AuthMethod>()
+        config.key?.let { methods += AuthPublickey(KeyPairWrapper(it)) }
+        if (config.password.isNotEmpty()) {
+            methods += AuthPassword(PasswordUtils.createOneOff(config.password.toCharArray()))
+        }
+        if (methods.isEmpty()) throw TermuxException.AuthFailed(IllegalStateException("No key or password given"))
+        return methods
     }
 
     private suspend fun pump(stream: InputStream, kind: OutputStream, output: OutputSink) {
@@ -160,7 +181,7 @@ class SshTermuxConnection(
 }
 
 // Android registers a cut-down provider as "BC"; sshj would find it and stop there.
-private object BouncyCastle {
+internal object BouncyCastle {
     init {
         Security.removeProvider("BC")
         Security.insertProviderAt(BouncyCastleProvider(), 1)

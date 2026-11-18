@@ -58,7 +58,7 @@
             android:screenOrientation="sensorLandscape"
             android:theme="@style/Theme.CodeEditor" />
         <activity
-            android:name=".activities.TermuxTestActivity"
+            android:name=".activities.TermuxConnectionActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:exported="false"
             android:label="Termux"

@@ -51,6 +51,10 @@
         </menu>
     </item>
 
+    <item
+        android:id="@+id/action_termux_connection"
+        android:title="Termux Connection" />
+
     <item android:title="Settings">
         <menu>
             <item

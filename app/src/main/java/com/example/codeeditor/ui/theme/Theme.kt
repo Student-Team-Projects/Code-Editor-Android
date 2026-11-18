@@ -44,6 +44,8 @@ fun CodeEditorTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = false,
+    // False for Compose content embedded in a View-based screen, which colours its own status bar.
+    styleWindow: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
@@ -56,7 +58,7 @@ fun CodeEditorTheme(
         else -> LightColorScheme
     }
     val view = LocalView.current
-    if (!view.isInEditMode) {
+    if (styleWindow && !view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
             window.statusBarColor = colorScheme.primary.toArgb()
