@@ -642,6 +642,49 @@ public class MainActivity extends AppCompatActivity {
             else showTerminal();
         });
 
+        ImageButton fileToggle = findViewById(R.id.file_toggle);
+        View fileBar = findViewById(R.id.fileBar);
+        ImageButton githubToggle = findViewById(R.id.github_toggle);
+        View githubBar = findViewById(R.id.githubBar);
+        ImageButton settingsToggle = findViewById(R.id.settings_toggle);
+        View settingsBar = findViewById(R.id.settingsBar);
+
+        if (fileToggle != null && fileBar != null) {
+            fileToggle.setOnClickListener(v -> {
+                if (fileBar.getVisibility() == View.VISIBLE) {
+                    fileBar.setVisibility(View.GONE);
+                } else {
+                    if (githubBar != null) githubBar.setVisibility(View.GONE);
+                    if (settingsBar != null) settingsBar.setVisibility(View.GONE);
+                    fileBar.setVisibility(View.VISIBLE);
+                }
+            });
+        }
+
+        if (githubToggle != null && githubBar != null) {
+            githubToggle.setOnClickListener(v -> {
+                if (githubBar.getVisibility() == View.VISIBLE) {
+                    githubBar.setVisibility(View.GONE);
+                } else {
+                    if (fileBar != null) fileBar.setVisibility(View.GONE);
+                    if (settingsBar != null) settingsBar.setVisibility(View.GONE);
+                    githubBar.setVisibility(View.VISIBLE);
+                }
+            });
+        }
+
+        if (settingsToggle != null && settingsBar != null) {
+            settingsToggle.setOnClickListener(v -> {
+                if (settingsBar.getVisibility() == View.VISIBLE) {
+                    settingsBar.setVisibility(View.GONE);
+                } else {
+                    if (fileBar != null) fileBar.setVisibility(View.GONE);
+                    if (githubBar != null) githubBar.setVisibility(View.GONE);
+                    settingsBar.setVisibility(View.VISIBLE);
+                }
+            });
+        }
+
         CodeEditorController.DisableCodeEditor(this);
 
         NewFileController.setDisabled(this);

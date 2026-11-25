@@ -86,6 +86,45 @@
                 android:padding="8dp"
                 android:src="@drawable/ic_terminal"
                 app:tint="?attr/colorPrimary" />
+
+            <!-- Toggle for FileBar -->
+            <ImageButton
+                android:id="@+id/file_toggle"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="File options"
+                android:padding="8dp"
+                android:src="@android:drawable/ic_menu_agenda"
+                app:tint="?attr/colorPrimary" />
+
+            <!-- Toggle for GithubBar -->
+            <ImageButton
+                android:id="@+id/github_toggle"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Git options"
+                android:padding="8dp"
+                android:src="@android:drawable/ic_menu_recent_history"
+                app:tint="?attr/colorPrimary" />
+
+            <!-- Toggle for SettingsBar -->
+            <ImageButton
+                android:id="@+id/settings_toggle"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Settings"
+                android:padding="8dp"
+                android:src="@android:drawable/ic_menu_preferences"
+                app:tint="?attr/colorPrimary" />
         </LinearLayout>
 
         <!-- 2px Divider bar between LeftSidebarLayout and ExplorerLayout -->
@@ -97,7 +136,7 @@
             android:background="?attr/colorSecondary"
             tools:ignore="MissingConstraints" />
 
-        <LinearLayout
+        <com.example.codeeditor.DirectoryTree
             android:id="@+id/ExplorerLayout"
             android:layout_width="300dp"
             android:layout_height="match_parent"
@@ -125,7 +164,40 @@
                 </LinearLayout>
             </ScrollView>
 
-        </LinearLayout>
+        </com.example.codeeditor.DirectoryTree>
+
+        <!-- FileBar laying in middle bar space -->
+        <com.example.codeeditor.FileBar
+            android:id="@+id/fileBar"
+            android:layout_width="300dp"
+            android:layout_height="match_parent"
+            android:layout_marginTop="58dp"
+            android:layout_marginStart="2dp"
+            android:visibility="gone"
+            app:layout_constraintStart_toEndOf="@+id/LeftSidebarLayout"
+            tools:ignore="MissingConstraints" />
+
+        <!-- GithubBar laying in middle bar space -->
+        <com.example.codeeditor.GithubBar
+            android:id="@+id/githubBar"
+            android:layout_width="300dp"
+            android:layout_height="match_parent"
+            android:layout_marginTop="58dp"
+            android:layout_marginStart="2dp"
+            android:visibility="gone"
+            app:layout_constraintStart_toEndOf="@+id/LeftSidebarLayout"
+            tools:ignore="MissingConstraints" />
+
+        <!-- SettingsBar laying instead of middle bar in activity_main -->
+        <com.example.codeeditor.SettingsBar
+            android:id="@+id/settingsBar"
+            android:layout_width="300dp"
+            android:layout_height="match_parent"
+            android:layout_marginTop="58dp"
+            android:layout_marginStart="2dp"
+            android:visibility="gone"
+            app:layout_constraintStart_toEndOf="@+id/LeftSidebarLayout"
+            tools:ignore="MissingConstraints" />
 
         <!-- 2px Divider bar between ExplorerLayout and CodeTextLayout -->
         <View
