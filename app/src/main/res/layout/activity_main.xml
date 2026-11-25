@@ -97,7 +97,7 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="File options"
                 android:padding="8dp"
-                android:src="@android:drawable/ic_menu_agenda"
+                android:src="@android:drawable/ic_menu_sort_by_size"
                 app:tint="?attr/colorPrimary" />
 
             <!-- Toggle for GithubBar -->
@@ -110,7 +110,7 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="Git options"
                 android:padding="8dp"
-                android:src="@android:drawable/ic_menu_recent_history"
+                android:src="@drawable/ic_github"
                 app:tint="?attr/colorPrimary" />
 
             <!-- Toggle for SettingsBar -->
