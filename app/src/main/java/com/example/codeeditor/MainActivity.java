@@ -20,9 +20,11 @@ import android.view.ContextThemeWrapper;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.webkit.MimeTypeMap;
 import android.webkit.WebView;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
@@ -37,29 +39,39 @@ import androidx.core.app.ActivityCompat;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.codeeditor.activities.TermuxConnectionActivity;
+import com.example.codeeditor.composables.TerminalPanelHost;
 import com.example.codeeditor.model.FileLogic;
+import com.example.codeeditor.termux.ssh.SshProfile;
 import com.example.codeeditor.ui.theme.ThemeManager;
 import com.example.codeeditor.viewmodels.FileVM;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
     private ImageButton hamburgerMenu;
     private WebView codeView;
+    private ImageButton terminalToggle;
+    private View terminalView; // created on first show
+    private boolean terminalShown = false;
     private HashMap<Object, Boolean> canBeEnabled;
     private String currentFileName;
     private String currentProjectPath;
     private Uri currentFileUri;
     private Uri currentDirectoryUri;
+    private String savedContent;
 
     public String currentLanguage = "English";
     public boolean showGitMenu = false;
@@ -180,31 +192,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void openFileFromUri(Uri uri) {
-        if (currentFileUri != null && !currentFileUri.equals(uri)) {
-            final Uri oldUri = currentFileUri;
-            CodeEditorController.getCode(this, content -> {
-                try {
-                    OutputStream os = getContentResolver().openOutputStream(oldUri, "wt");
-                    if (os != null) {
-                        os.write(content.getBytes());
-                        os.close();
-                    }
-                } catch (Exception ignored) {}
-            });
-        }
-        if (currentFileName != null) {
-            final String oldFileName = currentFileName;
-            currentFileName = null;
-            CodeEditorController.getCode(this, content -> {
-                FilesController.saveFile(oldFileName, content, MainActivity.this);
-            });
+        if (uri.equals(currentFileUri)) {
+            // Reloading it from disk would discard unsaved edits.
+            CodeEditorController.EnableCodeEditor(this);
+            return;
         }
 
         try {
             StringBuilder stringBuilder = new StringBuilder();
             InputStream inputStream = getContentResolver().openInputStream(uri);
             if (inputStream != null) {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
                 String line;
                 while ((line = reader.readLine()) != null) {
                     stringBuilder.append(line).append("\n");
@@ -216,15 +214,68 @@ public class MainActivity extends AppCompatActivity {
             String fileName = getFileNameFromUri(uri);
             if (fileName == null) fileName = "file.txt";
 
-            currentFileUri = uri;
-            currentFileName = fileName;
-
-            CodeEditorController.EnableCodeEditor(this);
-            CodeEditorController.setCode(content, this);
+            saveOpenFile(false);
+            showFile(uri, fileName, content);
         } catch (Exception e) {
             Log.e("MainActivity", "Error opening file from Uri: " + uri, e);
             Toast.makeText(this, "Failed to open file: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
         }
+    }
+
+    /** @param uri null for a file under the app's files dir, which {@code name} is then relative to */
+    private void showFile(Uri uri, String name, String content) {
+        currentFileUri = uri;
+        currentFileName = name;
+        savedContent = content;
+        CodeEditorController.EnableCodeEditor(this);
+        CodeEditorController.setCode(content, this);
+    }
+
+    /** The open file's content as last read from or written to disk; null when no file is open. */
+    public String getSavedContent() {
+        return savedContent;
+    }
+
+    /**
+     * Writes the editor content to where the open file came from. Asynchronous, but it reads the
+     * editor before any later {@link CodeEditorController#setCode} replaces it.
+     *
+     * @param force also write an unchanged file (otherwise its new mtime would make `make` rebuild)
+     */
+    public void saveOpenFile(boolean force) {
+        final Uri uri = currentFileUri;
+        final String name = currentFileName;
+        final String contentOnDisk = savedContent;
+        if (uri == null && name == null) return;
+        CodeEditorController.getCode(this, content -> {
+            if (content == null) {
+                Toast.makeText(this, "Couldn't read the editor, file not saved", Toast.LENGTH_LONG).show();
+                return;
+            }
+            if (!force && content.equals(contentOnDisk)) return;
+            boolean saved = uri != null ? writeToUri(uri, content) : FilesController.saveFile(name, content, this);
+            boolean stillOpen = Objects.equals(uri, currentFileUri) && Objects.equals(name, currentFileName);
+            if (saved && stillOpen) savedContent = content;
+        });
+    }
+
+    private boolean writeToUri(Uri uri, String content) {
+        try (OutputStream os = getContentResolver().openOutputStream(uri, "wt")) {
+            if (os == null) throw new IOException("No output stream for " + uri);
+            os.write(content.getBytes(StandardCharsets.UTF_8));
+            Toast.makeText(this, "File saved", Toast.LENGTH_SHORT).show();
+            return true;
+        } catch (Exception e) {
+            Log.e("MainActivity", "Error saving " + uri, e);
+            Toast.makeText(this, "Error saving file: " + e.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+            return false;
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        saveOpenFile(false);
     }
 
     private void saveSessionToPrefs() {
@@ -243,6 +294,7 @@ public class MainActivity extends AppCompatActivity {
                 currentProjectPath = uri.toString();
                 DirectoryTreeController.setEnabledForDocumentFile(this, docFile);
                 saveSessionToPrefs();
+                updateTerminalProject();
             }
         } catch (Exception e) {
             Log.e("MainActivity", "Error opening directory: " + uri, e);
@@ -315,9 +367,8 @@ public class MainActivity extends AppCompatActivity {
         fos.write(templateText.getBytes());
         fos.close();
 
-        currentFileName = newFile.getName();
-        CodeEditorController.EnableCodeEditor(this);
-        CodeEditorController.setCode(templateText, this);
+        saveOpenFile(false);
+        showFile(null, newFile.getName(), templateText);
 
         if (currentProjectPath != null && !currentProjectPath.isEmpty()) {
             DirectoryTreeController.setEnabled(this);
@@ -560,6 +611,7 @@ public class MainActivity extends AppCompatActivity {
         super.onSaveInstanceState(outState);
         outState.putString("currentProjectPath", currentProjectPath);
         outState.putString("currentFileName", currentFileName);
+        outState.putBoolean("terminalShown", terminalShown);
         if (currentDirectoryUri != null) {
             outState.putString("currentDirectoryUri", currentDirectoryUri.toString());
         }
@@ -582,6 +634,13 @@ public class MainActivity extends AppCompatActivity {
         createRequiredFolders();
 
         codeView = CodeEditorController.setupCodeEditor(this);
+
+        SshProfile.installAsDefault(this);
+        terminalToggle = findViewById(R.id.terminal_toggle);
+        terminalToggle.setOnClickListener(v -> {
+            if (terminalShown) showEditor();
+            else showTerminal();
+        });
 
         CodeEditorController.DisableCodeEditor(this);
 
@@ -620,24 +679,7 @@ public class MainActivity extends AppCompatActivity {
                     openDirectoryPicker();
                     return true;
                 } else if (id == R.id.action_save_file) {
-                    if (getCurrentFileName() != null) {
-                        CodeEditorController.getCode(MainActivity.this, content -> {
-                            FilesController.saveFile(getCurrentFileName(), content, MainActivity.this);
-                        });
-                    } else if (currentFileUri != null) {
-                        CodeEditorController.getCode(MainActivity.this, content -> {
-                            try {
-                                OutputStream os = getContentResolver().openOutputStream(currentFileUri, "wt");
-                                if (os != null) {
-                                    os.write(content.getBytes());
-                                    os.close();
-                                    Toast.makeText(MainActivity.this, "File saved", Toast.LENGTH_SHORT).show();
-                                }
-                            } catch (Exception e) {
-                                Toast.makeText(MainActivity.this, "Error saving file", Toast.LENGTH_SHORT).show();
-                            }
-                        });
-                    }
+                    saveOpenFile(true);
                     return true;
                 } else if (id == R.id.action_close_file) {
                     if (getCurrentFileName() != null) {
@@ -682,6 +724,9 @@ public class MainActivity extends AppCompatActivity {
                     }
                     updateThemeColors();
                     return true;
+                } else if (id == R.id.action_termux_connection) {
+                    openTermuxConnection();
+                    return true;
                 } else if (id == R.id.action_file_explorer) {
                     Intent intent = new Intent(MainActivity.this, InternalStorageActivity.class);
                     startActivity(intent);
@@ -721,7 +766,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             if (savedInstanceState != null) {
                 currentProjectPath = savedInstanceState.getString("currentProjectPath");
-                currentFileName = savedInstanceState.getString("currentFileName");
+                String fileName = savedInstanceState.getString("currentFileName");
                 String dirUriStr = savedInstanceState.getString("currentDirectoryUri");
                 String fileUriStr = savedInstanceState.getString("currentFileUri");
                 if (dirUriStr != null) {
@@ -740,11 +785,10 @@ public class MainActivity extends AppCompatActivity {
                     } catch (Exception ignored) {}
                 }
                 if (fileUriStr != null) {
-                    currentFileUri = Uri.parse(fileUriStr);
-                    openFileFromUri(currentFileUri);
-                } else if (currentFileName != null) {
+                    openFileFromUri(Uri.parse(fileUriStr));
+                } else if (fileName != null) {
                     try {
-                        setCurrentFileName(currentFileName);
+                        setCurrentFileName(fileName);
                     } catch (Exception ignored) {}
                 }
             } else {
@@ -753,6 +797,56 @@ public class MainActivity extends AppCompatActivity {
                 } catch (Exception ignored) {}
             }
         }
+
+        updateTerminalProject();
+        if (savedInstanceState != null && savedInstanceState.getBoolean("terminalShown")) {
+            showTerminal();
+        }
+    }
+
+    public boolean isTerminalShown() {
+        return terminalShown;
+    }
+
+    /** Shows the terminal in place of the editor. The editor is only hidden, so it keeps its state. */
+    public void showTerminal() {
+        // Commands run in the terminal should see the edits.
+        saveOpenFile(false);
+        if (terminalView == null) {
+            terminalView = TerminalPanelHost.create(this, this::openTermuxConnection);
+            FrameLayout container = findViewById(R.id.CodeTextLayout);
+            container.addView(terminalView, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        }
+        codeView.setVisibility(View.GONE);
+        terminalView.setVisibility(View.VISIBLE);
+        terminalShown = true;
+        terminalToggle.setImageResource(R.drawable.ic_code);
+        terminalToggle.setContentDescription("Show editor");
+    }
+
+    public void showEditor() {
+        if (terminalView != null && terminalView.getVisibility() == View.VISIBLE) {
+            InputMethodManager imm = getSystemService(InputMethodManager.class);
+            if (imm != null) imm.hideSoftInputFromWindow(terminalView.getWindowToken(), 0);
+            terminalView.clearFocus();
+            terminalView.setVisibility(View.GONE);
+        }
+        codeView.setVisibility(View.VISIBLE);
+        terminalShown = false;
+        terminalToggle.setImageResource(R.drawable.ic_terminal);
+        terminalToggle.setContentDescription("Show terminal");
+    }
+
+    public void openTermuxConnection() {
+        startActivity(new Intent(this, TermuxConnectionActivity.class));
+    }
+
+    /** Only a folder from the system picker has a path Termux could open. */
+    private void updateTerminalProject() {
+        boolean pickedFolder = currentDirectoryUri != null
+                && currentDirectoryUri.toString().equals(currentProjectPath);
+        TerminalPanelHost.setProjectDirectory(this, pickedFolder ? currentDirectoryUri : null);
     }
 
     protected void disableMainLayout(){
@@ -816,40 +910,31 @@ public class MainActivity extends AppCompatActivity {
         return currentFileName != null;
     }
 
+    /** Opens a file under the app's files dir, or closes the open file when {@code fileName} is null. */
     public void setCurrentFileName(String fileName) throws Exception{
-        if (currentFileName != null && !currentFileName.equals(fileName)) {
-            final String oldFile = currentFileName;
-            CodeEditorController.getCode(this, content -> {
-                FilesController.saveFile(oldFile, content, MainActivity.this);
-            });
-        }
-        if (currentFileUri != null) {
-            final Uri oldUri = currentFileUri;
+        if (fileName == null) {
+            saveOpenFile(false);
             currentFileUri = null;
-            CodeEditorController.getCode(this, content -> {
-                try {
-                    OutputStream os = getContentResolver().openOutputStream(oldUri, "wt");
-                    if (os != null) {
-                        os.write(content.getBytes());
-                        os.close();
-                    }
-                } catch (Exception ignored) {}
-            });
-        }
-        if(fileName == null){
             currentFileName = null;
+            savedContent = null;
             CodeEditorController.DisableCodeEditor(this);
             return;
         }
-        currentFileName = fileName;
-        CodeEditorController.EnableCodeEditor(this);
-        CodeEditorController.setCode(FilesController.getFilesInside(fileName, this), this);
+        if (currentFileUri == null && fileName.equals(currentFileName)) {
+            // Reloading it from disk would discard unsaved edits.
+            CodeEditorController.EnableCodeEditor(this);
+            return;
+        }
+        String content = FilesController.getFilesInside(fileName, this);
+        saveOpenFile(false);
+        showFile(null, fileName, content);
     }
 
     public void setCurrentProjectPath(String projectPath) throws Exception{
         currentProjectPath = projectPath;
         DirectoryTreeController.setEnabled(this);
         saveSessionToPrefs();
+        updateTerminalProject();
     }
 
     public String getCurrentFileName(){

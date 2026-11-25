@@ -73,6 +73,19 @@
             app:layout_constraintWidth_percent="0.10"
             app:layout_constraintStart_toStartOf="parent"
             tools:ignore="MissingConstraints">
+
+            <!-- Switches the right panel between the editor and the terminal. -->
+            <ImageButton
+                android:id="@+id/terminal_toggle"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Show terminal"
+                android:padding="8dp"
+                android:src="@drawable/ic_terminal"
+                app:tint="?attr/colorPrimary" />
         </LinearLayout>
 
         <!-- 2px Divider bar between LeftSidebarLayout and ExplorerLayout -->
@@ -134,7 +147,7 @@
             android:background="@drawable/code_text_panel_background"
             tools:ignore="MissingConstraints">
 
-            <WebView
+            <com.example.codeeditor.CodeWebView
                 android:id="@+id/codeView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />

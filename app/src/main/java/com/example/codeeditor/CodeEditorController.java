@@ -14,6 +14,10 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class CodeEditorController {
 
     @SuppressWarnings("deprecation")
@@ -64,7 +68,8 @@ public class CodeEditorController {
         WebView codePanel = mainScreen.findViewById(R.id.codeView);
         if (codePanel != null) {
             codePanel.setEnabled(true);
-            codePanel.setVisibility(View.VISIBLE);
+            // Closing a file while the terminal is shown shouldn't bring the editor back.
+            if (!mainScreen.isTerminalShown()) codePanel.setVisibility(View.VISIBLE);
         }
         setCode("// Open a file from menu File -> Open File or create new", mainScreen);
     }
@@ -73,19 +78,10 @@ public class CodeEditorController {
         WebView codePanel = mainScreen.findViewById(R.id.codeView);
         if (codePanel != null) {
             codePanel.setEnabled(true);
-            codePanel.setVisibility(View.VISIBLE);
+            // Opening a file switches back from the terminal.
+            mainScreen.showEditor();
             codePanel.requestFocus();
         }
-    }
-
-    private static String escapeJs(String str) {
-        if (str == null) return "";
-        return str.replace("\\", "\\\\")
-                  .replace("\"", "\\\"")
-                  .replace("'", "\\'")
-                  .replace("\n", "\\n")
-                  .replace("\r", "\\r")
-                  .replace("\t", "\\t");
     }
 
     public static void setCode(String code, MainActivity mainScreen) {
@@ -97,32 +93,32 @@ public class CodeEditorController {
                 ? fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase()
                 : "";
 
-        String escapedCode = escapeJs(code);
-
-        String jsCommand = "javascript:setEditorValueFromAndroid(\"" + escapedCode + "\", \"" + extension + "\");";
+        // A JSON string literal is a valid JS string literal.
+        String jsCommand = "setEditorValueFromAndroid(" + JSONObject.quote(code) + ", " + JSONObject.quote(extension) + ");";
         codeEditor.evaluateJavascript(jsCommand, null);
     }
 
-    // acquiring code is async
+    /** Passes the editor content to the callback (asynchronously), or null if it can't be read. */
     public static void getCode(MainActivity mainScreen, ValueCallback<String> callback) {
         WebView codeEditor = mainScreen.findViewById(R.id.codeView);
         if (codeEditor == null) {
-            callback.onReceiveValue("");
+            callback.onReceiveValue(null);
             return;
         }
 
-        codeEditor.evaluateJavascript("window.editor ? window.editor.getValue() : '';", value -> {
-            if (value != null && value.length() >= 2 && value.startsWith("\"") && value.endsWith("\"")) {
-                String unescaped = value.substring(1, value.length() - 1)
-                        .replace("\\n", "\n")
-                        .replace("\\\"", "\"")
-                        .replace("\\'", "'")
-                        .replace("\\\\", "\\");
-                callback.onReceiveValue(unescaped);
-            } else {
-                callback.onReceiveValue(value != null ? value : "");
-            }
-        });
+        codeEditor.evaluateJavascript("window.editor ? window.editor.getValue() : null;",
+                json -> callback.onReceiveValue(decodeJsonString(json)));
+    }
+
+    /** evaluateJavascript hands results back JSON-encoded. */
+    private static String decodeJsonString(String json) {
+        if (json == null || json.equals("null")) return null;
+        try {
+            return new JSONArray("[" + json + "]").getString(0);
+        } catch (JSONException e) {
+            Log.e("CodeEditorController", "Unexpected editor value: " + json, e);
+            return null;
+        }
     }
 
     // listener
@@ -136,16 +132,9 @@ public class CodeEditorController {
         @JavascriptInterface
         public void onEditorReady() {
             mainScreen.runOnUiThread(() -> {
-                String currentFile = mainScreen.getCurrentFileName();
-                if (currentFile != null) {
-                    try {
-                        CodeEditorController.setCode(FilesController.getFilesInside(currentFile, mainScreen), mainScreen);
-                    } catch (Exception e) {
-                        Log.e("CodeEditorController", "Error setting code on ready", e);
-                    }
-                } else {
-                    CodeEditorController.setCode("// Open file from menu File -> Open File or create new", mainScreen);
-                }
+                String content = mainScreen.getSavedContent();
+                CodeEditorController.setCode(content != null ? content
+                        : "// Open file from menu File -> Open File or create new", mainScreen);
             });
         }
 

@@ -97,10 +97,7 @@ public class FileButton {
     }
 
     static private void saveFile(MainActivity mainScreen){
-        String fileName = mainScreen.getCurrentFileName();
-        CodeEditorController.getCode(mainScreen, content -> {
-            FilesController.saveFile(fileName, content, mainScreen);
-        });
+        mainScreen.saveOpenFile(true);
     }
 
     static private void openProject(MainActivity mainScreen) {
