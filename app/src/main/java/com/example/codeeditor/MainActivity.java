@@ -642,6 +642,67 @@ public class MainActivity extends AppCompatActivity {
             else showTerminal();
         });
 
+        ImageButton termuxToggle = findViewById(R.id.termux_toggle);
+        View termuxBar = findViewById(R.id.termuxBar);
+        ImageButton fileToggle = findViewById(R.id.file_toggle);
+        View fileBar = findViewById(R.id.fileBar);
+        ImageButton githubToggle = findViewById(R.id.github_toggle);
+        View githubBar = findViewById(R.id.githubBar);
+        ImageButton settingsToggle = findViewById(R.id.settings_toggle);
+        View settingsBar = findViewById(R.id.settingsBar);
+
+        if (termuxToggle != null && termuxBar != null) {
+            termuxToggle.setOnClickListener(v -> {
+                if (termuxBar.getVisibility() == View.VISIBLE) {
+                    termuxBar.setVisibility(View.GONE);
+                } else {
+                    if (fileBar != null) fileBar.setVisibility(View.GONE);
+                    if (githubBar != null) githubBar.setVisibility(View.GONE);
+                    if (settingsBar != null) settingsBar.setVisibility(View.GONE);
+                    termuxBar.setVisibility(View.VISIBLE);
+                }
+            });
+        }
+
+        if (fileToggle != null && fileBar != null) {
+            fileToggle.setOnClickListener(v -> {
+                if (fileBar.getVisibility() == View.VISIBLE) {
+                    fileBar.setVisibility(View.GONE);
+                } else {
+                    if (termuxBar != null) termuxBar.setVisibility(View.GONE);
+                    if (githubBar != null) githubBar.setVisibility(View.GONE);
+                    if (settingsBar != null) settingsBar.setVisibility(View.GONE);
+                    fileBar.setVisibility(View.VISIBLE);
+                }
+            });
+        }
+
+        if (githubToggle != null && githubBar != null) {
+            githubToggle.setOnClickListener(v -> {
+                if (githubBar.getVisibility() == View.VISIBLE) {
+                    githubBar.setVisibility(View.GONE);
+                } else {
+                    if (termuxBar != null) termuxBar.setVisibility(View.GONE);
+                    if (fileBar != null) fileBar.setVisibility(View.GONE);
+                    if (settingsBar != null) settingsBar.setVisibility(View.GONE);
+                    githubBar.setVisibility(View.VISIBLE);
+                }
+            });
+        }
+
+        if (settingsToggle != null && settingsBar != null) {
+            settingsToggle.setOnClickListener(v -> {
+                if (settingsBar.getVisibility() == View.VISIBLE) {
+                    settingsBar.setVisibility(View.GONE);
+                } else {
+                    if (termuxBar != null) termuxBar.setVisibility(View.GONE);
+                    if (fileBar != null) fileBar.setVisibility(View.GONE);
+                    if (githubBar != null) githubBar.setVisibility(View.GONE);
+                    settingsBar.setVisibility(View.VISIBLE);
+                }
+            });
+        }
+
         CodeEditorController.DisableCodeEditor(this);
 
         NewFileController.setDisabled(this);
@@ -839,7 +900,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void openTermuxConnection() {
-        startActivity(new Intent(this, TermuxConnectionActivity.class));
+        View termuxBar = findViewById(R.id.termuxBar);
+        View fileBar = findViewById(R.id.fileBar);
+        View githubBar = findViewById(R.id.githubBar);
+        View settingsBar = findViewById(R.id.settingsBar);
+
+        if (fileBar != null) fileBar.setVisibility(View.GONE);
+        if (githubBar != null) githubBar.setVisibility(View.GONE);
+        if (settingsBar != null) settingsBar.setVisibility(View.GONE);
+        if (termuxBar != null) termuxBar.setVisibility(View.VISIBLE);
     }
 
     /** Only a folder from the system picker has a path Termux could open. */

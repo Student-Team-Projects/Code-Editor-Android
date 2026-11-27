@@ -83,7 +83,7 @@
 
         <Button
             android:id="@+id/continueButton"
-            android:layout_width="wrap_content"
+            android:layout_width="300dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:layout_marginBottom="8dp"
@@ -95,7 +95,7 @@
 
         <Button
             android:id="@+id/newButton"
-            android:layout_width="wrap_content"
+            android:layout_width="300dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:fontFamily="@font/uncutsans_bold"

@@ -63,25 +63,18 @@ fun SshConnectionScreen(session: TermuxSession) {
     val error = (state as? ConnectionState.Failed)?.error
     val needsSetup = error is TermuxException.NotReachable || error is TermuxException.AuthFailed
 
-    Row(modifier = Modifier.fillMaxSize().padding(12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Column(
-            modifier = Modifier.weight(0.45f).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text("Termux connection", style = MaterialTheme.typography.titleLarge)
-            SshSettings(
-                state, hostKeys, profile, key,
-                onConnect = { config -> session.connect(SshTermuxConnection(config, hostKeys)) },
-                onDisconnect = { session.disconnect() },
-            )
-        }
-        Column(
-            modifier = Modifier.weight(0.55f).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            SshKeySettings(session, keys, key, onKeyChanged = { key = it })
-            SshSetupHelp(autoExpand = needsSetup)
-        }
+    Column(
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text("Termux connection", style = MaterialTheme.typography.titleLarge)
+        SshSettings(
+            state, hostKeys, profile, key,
+            onConnect = { config -> session.connect(SshTermuxConnection(config, hostKeys)) },
+            onDisconnect = { session.disconnect() },
+        )
+        SshKeySettings(session, keys, key, onKeyChanged = { key = it })
+        SshSetupHelp(autoExpand = needsSetup)
     }
 }
 
